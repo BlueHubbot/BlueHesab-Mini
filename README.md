@@ -1,0 +1,1 @@
+# BlueHesab Mini
