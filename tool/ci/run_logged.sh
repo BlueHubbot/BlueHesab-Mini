@@ -17,5 +17,10 @@ if [ "$code" -ne 0 ] && [ -n "${GITHUB_ACTIONS:-}" ]; then
     | awk 'BEGIN{ORS="%0A"} {print}' > "$log.msg"
   echo "::error title=$title (exit $code)::$(cat "$log.msg")"
 fi
+if [ "$code" -eq 0 ] && [ -n "${GITHUB_ACTIONS:-}" ]; then
+  # Evidence for the PR: the last non-empty output line (e.g. test totals).
+  last="$(grep -v '^[[:space:]]*$' "$log" | tail -n 1 | cut -c1-300)"
+  echo "::notice title=$title::${last}"
+fi
 rm -f "$log" "$log.msg"
 exit "$code"

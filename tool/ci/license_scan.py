@@ -192,6 +192,10 @@ def main(argv: list[str] | None = None) -> int:
         args.report.write_text(report, encoding="utf-8")
     failed = [r for r in rows if r.state not in PASS_STATES]
     if os.environ.get("GITHUB_ACTIONS") == "true":
+        listed = "; ".join(f"{r.name} {r.version} {r.license} {r.state}"
+                           for r in rows)
+        print(f"::notice title=License scan ({len(rows)} packages, "
+              f"{len(failed)} failing)::{listed}")
         for r in failed[:10]:
             print(f"::error title=License scan::{r.name} {r.version}: "
                   f"{r.license} ({r.state}) {r.note}")
