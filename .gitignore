@@ -79,3 +79,15 @@ signing/
 # Local agent state (not shared)
 .claude/settings.local.json
 .claude/worktrees/
+
+# Flutter build products and generated platform files (T-001)
+*.apk
+*.aab
+*.ipa
+*.dmg
+*.msix
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/ephemeral/
+**/linux/flutter/ephemeral/
+**/web/.dart_tool/
