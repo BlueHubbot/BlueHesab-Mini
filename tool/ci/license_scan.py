@@ -194,8 +194,8 @@ def main(argv: list[str] | None = None) -> int:
     if os.environ.get("GITHUB_ACTIONS") == "true":
         listed = "; ".join(f"{r.name} {r.version} {r.license} {r.state}"
                            for r in rows)
-        print(f"::notice title=License scan ({len(rows)} packages, "
-              f"{len(failed)} failing)::{listed}")
+        print(f"::notice title=License scan · {len(rows)} packages · "
+              f"{len(failed)} failing::{listed}")
         for r in failed[:10]:
             print(f"::error title=License scan::{r.name} {r.version}: "
                   f"{r.license} ({r.state}) {r.note}")

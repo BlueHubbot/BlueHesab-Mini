@@ -29,6 +29,14 @@ jobs:
         run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
       - name: Resolve packages from the committed lockfile
         run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: The checkout stays clean after pub get (no generated drift)
+        run: |
+          if ! git diff --quiet; then
+            git --no-pager diff
+            msg="$(git --no-pager diff | head -n 60 | sed -e 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')"
+            echo "::error title=Dirty tree after pub get::${msg}"
+            exit 1
+          fi
       - name: Spike code is never imported by the app (spike/README.md)
         run: |
           if grep -rnE "spike/|package:spike" lib test --include='*.dart'; then
