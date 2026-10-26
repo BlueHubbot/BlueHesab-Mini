@@ -13,6 +13,13 @@ analyzer:
     # Spike code is analysed inside its own package (spike/README.md).
     - spike/**
     - build/**
+    # Platform folders: Flutter 3.47.8 adds these on pub get (CI checks the
+    # tree stays clean).
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
 
 linter:
   rules:
