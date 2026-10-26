@@ -1,0 +1,39 @@
+name: Bug report
+description: Report a reproducible defect
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: App version or commit
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: OS/version/device/browser
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs; remove secrets/personal data

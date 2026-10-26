@@ -1,0 +1,81 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials.json
+
+# Build/cache
+build/
+dist/
+coverage/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Model weights/data
+*.gguf
+*.safetensors
+*.onnx
+models/
+datasets/
+
+# Private local data
+*.sqlite
+*.sqlite3
+*.db
+private-data/
+backups/
+
+# Signing keys and certificates (never commit; see docs/product/DISTRIBUTION_PLAN.md)
+*.jks
+*.keystore
+key.properties
+**/android/key.properties
+*.p12
+*.pfx
+*.p8
+*.mobileprovision
+service-account*.json
+signing/
+.signing/
+
+# Backup files made by the app contain private financial data (BACKUP_RESTORE.md);
+# only synthetic fixtures may be committed
+*.bluehesab
+!test/fixtures/**/*.bluehesab
+!tool/**/fixtures/**/*.bluehesab
+
+# Flutter / Dart generated files
+.pub-cache/
+.packages
+**/android/local.properties
+**/android/.gradle/
+**/android/captures/
+**/ios/Pods/
+**/ios/.symlinks/
+**/macos/Pods/
+**/macos/Flutter/ephemeral/
+**/windows/flutter/ephemeral/
+*.iml
+
+# Local agent state (not shared)
+.claude/settings.local.json
+.claude/worktrees/

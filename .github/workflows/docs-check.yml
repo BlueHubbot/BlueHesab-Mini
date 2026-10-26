@@ -1,0 +1,30 @@
+name: Documentation checks
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - "design/**"
+      - "tool/docs_check/**"
+      - "*.md"
+      - ".github/**"
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Self-test of the checker (mutation tests)
+        run: python3 tool/docs_check/test_docs_check.py
+      - name: Data model SQL runs and its constraints hold (real SQLite)
+        run: python3 tool/docs_check/check_data_model_ddl.py
+      - name: Documentation consistency (links, IDs, hidden characters, tokens, contrast numbers)
+        run: python3 tool/docs_check/docs_check.py --strict

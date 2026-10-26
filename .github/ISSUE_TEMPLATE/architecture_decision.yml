@@ -1,0 +1,29 @@
+name: Architecture decision proposal
+description: Propose or revise an architectural decision
+title: "[ADR]: "
+labels: ["architecture", "needs-decision"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and problem
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options and trade-offs
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and links
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Security, privacy, platform and license impact
+    validations:
+      required: true
