@@ -148,7 +148,7 @@ jobs:
         run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
       - name: Build
         run: bash tool/ci/run_logged.sh "build ${{ matrix.target }}" ${{ matrix.command }}
-      - name: Package the artifact with SHA256SUMS (unsigned build)
+      - name: Package the artifact with SHA256SUMS (unsigned; the APK carries the debug key, not for release)
         env:
           OUT: ${{ matrix.out }}
           TARGET: ${{ matrix.target }}
@@ -159,7 +159,7 @@ jobs:
               if command -v ditto >/dev/null; then
                 ditto -c -k --keepParent "$OUT" "dist/$TARGET.zip"
               fi ;;
-            *.apk) cp "$OUT" "dist/bluehesab-mini-$TARGET-unsigned.apk" ;;
+            *.apk) cp "$OUT" "dist/bluehesab-mini-$TARGET-debug-signed.apk" ;;
             *)
               if [ "$RUNNER_OS" = "Windows" ]; then
                 pwsh -NoProfile -Command "Compress-Archive -Path '$OUT/*' -DestinationPath 'dist/$TARGET.zip'"
