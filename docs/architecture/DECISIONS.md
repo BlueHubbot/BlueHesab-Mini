@@ -27,7 +27,7 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 | Speech | whisper.cpp candidate | OPEN | latency, license, packaging |
 | Notifications | Platform adapter | OPEN | with `tasks` module |
 | Distribution | GitHub Releases + Pages landing; unsigned builds with honest notes | PROPOSED | `DISTRIBUTION_PLAN.md`, Q-07 |
-| Repo visibility | Private until v0.1 | OPEN | Q-04 |
+| Repo visibility | Public (owner made it public on 2026-10-26) | OWNER-DECIDED | Q-04 (closed) |
 | Third-party code | No reuse before audit; GPL/AGPL reference-only | POLICY | `OPEN_SOURCE_AUDIT.md` (H1) |
 | Telemetry | None | POLICY | `PRIVACY.md` |
 
@@ -39,3 +39,6 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 | 2026-10-25 | MVP profile with lighter gates; SMS paste/share inside MVP; agents one at a time; BigInt TEXT money | chat |
 | 2026-10-26 | Doc groups produced in order: S0+Medium-A, Extra, Medium-B | chat |
 | 2026-10-26 | Doc groups High and Max (final consistency audit) produced on the owner's command | chat |
+| 2026-10-26 | Q-04: repository is public (owner switched it before merge of the docs pack) | chat |
+| 2026-10-26 | Q-12: spend cap = Claude Pro plan plus at most USD 15 extra usage per month (owner set the limit in claude.ai settings); Advisor scheduled runs: 2 per day (3 allowed); default effort `high`, `xhigh`/`max` only when a task packet says so | chat |
+| 2026-10-26 | No external AI API provider for now: Lead, Advisor and builders run as Claude sessions on the owner's subscription; H200 stays optional (L2) | chat |
