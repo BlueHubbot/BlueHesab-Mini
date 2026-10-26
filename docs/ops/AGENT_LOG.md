@@ -1,0 +1,16 @@
+# AGENT_LOG
+
+یک خط برای هر کار تمام‌شده یا تصمیم مهم. قدیمی‌ها پاک نمی‌شوند (فقط اضافه کن). قالب:
+
+`YYYY-MM-DD HH:MM · نقش · شناسه‌ی کار · وضعیت (DONE/BLOCKED/…) · خلاصه‌ی یک‌خطی · شواهد (PR/commit/آزمون)`
+
+---
+
+- 2026-10-25 · Advisor · DOCS-S0 · DONE · سند UI به ۴۱ فایل Markdown (به‌علاوه‌ی README فهرست) تقسیم شد؛ محتوا خط‌به‌خط با اصل برابر است؛ `design_tokens.json` استخراج شد؛ checksum با AX-02 برابر است (`e6064535…3e`).
+- 2026-10-25 · Advisor · DOCS-M1…M7 · DONE · AGENTS.md، CLAUDE.md، ops، LICENSE/NOTICE/COC، CONTRIBUTING، RUNBOOK، ADR-0007/0008، DISTRIBUTION_PLAN نوشته شد؛ هنوز در مخزن ادغام نشده.
+- 2026-10-26 · Advisor · DOCS-E1…E7 · DONE · MVP_SCOPE، DATA_MODEL (پول TEXT/BigInt، idempotency، مهاجرت)، MODULE_CONTRACT (ModuleRegistry، بودجه تنها ماژول MVP)، CAPTURE_PIPELINE (پارسر قطعی پیامک، بدون ذخیره‌ی متن خام)، AI_TOOL_CONTRACT (فقط پیشنهاد، تأیید صریح)، AUTONOMY_AND_ESCALATION (۱۰ کلاه، D0–D3، قطع‌کننده‌ها، طرح آزمون زمان‌بندی خودکار)، AGENT_OPERATING_MODEL v2، ADR-0009، ADR-UI-009 نوشته شد؛ شناسه‌های هم‌نام با سند UI تغییر نام یافت (DD، MDC، CAP).
+- 2026-10-26 · Advisor · DOCS-M8…M11 · DONE · PAGE_INVENTORY (۱۸ صفحه/مسیر)، TEST_STRATEGY v2، RELEASE_AND_VERSIONING v2 (چک‌لیست v0.1)، DECISIONS v2 نوشته شد.
+- 2026-10-26 · Advisor · DOCS-H1…H10 · DONE · حسابرسی متن‌باز v2 (۴ مورد تأییدشده با منبع)، POSITIONING (بدون ادعای رقبا؛ سایت‌ها قابل خواندن نبودند)، LOCAL_MODEL_SETUP، MODULE_ROADMAP، SPIKE_PLAN (SP-01…12)، BACKUP_RESTORE، SECURITY_PRIVACY_MODEL، PRIVACY، ۸ digest، T-001…003، README/README.fa، GROWTH_PLAN.
+- 2026-10-26 · Advisor · DOCS-X1 (Max) · DONE · بازبینی نهایی سازگاری: `docs_check` نسخه‌ی ۲ (L1–L4، R1–R7، D1، T1، T2، S1) و آزمون خودکار آن (۲۷ آزمون، با کنترل منفی)؛ ۰ خطا و ۰ هشدار روی کل مخزن؛ ۲۱۰ بررسی کنتراست و چک‌سام توکن‌ها دوباره محاسبه شد؛ SQL قرارداد داده روی SQLite واقعی اجرا و قیدهایش آزموده شد (`check_data_model_ddl.py`)؛ ۲۵ یافته‌ی سند پروژه رفع شد؛ ۴۸ فایل قدیمی بسته با تصمیم‌های ۲۵ اکتبر هم‌خوان شد؛ ۱۲ مورد در خود مشخصات UI در `docs/design/SPEC_ERRATA.md` ثبت شد (مشخصات دست نخورد)؛ نویسه‌ی پنهان در کد خودِ checker پیدا و حذف شد. شواهد: `docs/ops/CONSISTENCY_AUDIT.md` §10.
+- 2026-10-26 · Lead · INTEGRATE-DOCS · DONE · بسته‌ی through-max روی شاخه‌ی `docs/s0-medium-a-extra` کامیت و push شد (۲۷ آزمون OK، ۰ خطا/۰ هشدار، ۷۴ انتظار SQL بدون شکست)؛ Q-04 (عمومی) و Q-12 (Pro + ۱۵ دلار) ثبت شد؛ Actionها با SHA قفل شد (SP-6).
+- 2026-10-26 · Lead · Q-15 + ESC-000 · DONE · ADR-0009، ADR-UI-009 و ADR-0001/0005/0006 پذیرفته شد (صاحب محصول)؛ ادغام به Lead سپرده شد؛ ESC-000 برای آزمون بیدارشدن مشاور باز شد؛ نام شاخه‌ی پاسخ مشاور `claude/advisor-reply-NNN` شد.

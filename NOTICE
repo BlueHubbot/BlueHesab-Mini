@@ -1,0 +1,10 @@
+BlueHesab Mini
+Copyright 2026 BlueHesab Mini contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Third-party components (fonts, icons, libraries, models, datasets) carry their own
+licenses. They are recorded one by one in docs/research/OPEN_SOURCE_AUDIT.md and,
+once the application exists, in a generated dependency inventory. The name
+"BlueHesab" / «آبی‌حساب», its logo and brand assets are not licensed for use as
+trademarks by forks (Apache-2.0, section 6).
