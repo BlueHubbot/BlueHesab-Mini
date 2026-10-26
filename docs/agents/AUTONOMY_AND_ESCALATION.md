@@ -1,6 +1,6 @@
 # AUTONOMY_AND_ESCALATION — Who decides what, and how questions travel
 
-**Status:** PROPOSED (core accepted via ADR-0008; scheduling parts PENDING Q-03) · **Owner:** Lead · **Date:** 2026-10-26
+**Status:** PROPOSED (core accepted via ADR-0008; scheduling verified 2026-10-26, Q-03) · **Owner:** Lead · **Date:** 2026-10-26
 **Depends on:** ADR-0008, `AGENTS.md`, `AGENT_OPERATING_MODEL.md`, `RUNBOOK.md`, UI spec §13 (AG-01…AG-16, AGR, AGX, TCF) and §14 (gates).
 
 ## خلاصه‌ی فارسی
@@ -104,7 +104,7 @@ Goal: the Advisor wakes up without the owner typing anything, answers open ESC f
 1. **Capability checks (owner or Lead, once):** a scheduled task can (a) read the GitHub repo, (b) create/switch branch, (c) write files, (d) push a branch or open a PR, (e) notify the owner's phone. Confirm each with a dry run.
 2. **Dry run (ESC-000):** Lead commits `ESC-000.md` ("test: reply with the current date and the ID list in the open-questions file"). Scheduled task fires, creates branch `claude/advisor-reply-000`, writes `ADVISOR_REPLY-000.md`, pushes, notifies. Success = file exists with correct content and no change outside `docs/ops/escalations/`.
 3. **Task prompt (fresh session each time, so it must be self-contained):** read `AGENTS.md` and `docs/ops/STATUS.md`; list ESC files without a reply; for each, read only the cited IDs; write `ADVISOR_REPLY-NNN.md` in the format of §3; touch no other path; push to `claude/advisor-reply-NNN` (cloud scheduled runs push `claude/`-prefixed branches); if there is nothing to answer, stop silently.
-4. **Schedule:** start with twice a day (e.g. 09:07 and 17:43 Asia/Dubai) while the project is active; after M1 move to "on demand" if the Lead can trigger it; avoid minute 0 to spread load.
+4. **Schedule:** twice a day, 09:07 and 17:07 Asia/Dubai (scheduled task "BlueHesab Advisor: answer open ESC files"; owner cap: 2 runs a day, at most 3; Pro allows 5 scheduled runs a day) while the project is active; after M1 move to "on demand" if the Lead can trigger it; avoid minute 0 to spread load.
 5. **Safety:** the scheduled task has repo-only access, no secrets, replies never auto-merged; Lead reads and applies. D3 replies still wait for the owner. Approval mode of scheduled runs: if runs stop for approvals, the owner enables automatic approval for this task only, with the path restriction in the prompt.
 6. **Fallback:** if any check fails, the owner sends one word ("بخوان") to the Advisor chat when STATUS shows an open blocking ESC; STATUS prints that need explicitly.
 7. **Result recorded in** `OPEN_QUESTIONS.md` Q-03 and ADR-0008 (PENDING → verified).

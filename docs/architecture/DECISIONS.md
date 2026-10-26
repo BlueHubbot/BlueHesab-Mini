@@ -5,7 +5,7 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 | Topic | Current position | Status | Reference / evidence needed |
 |---|---|---|---|
 | License | Apache-2.0 | ACCEPTED | ADR-0007 |
-| Agent workflow | Lead sole contact, hats one at a time, Advisor at gates, git as bus | ACCEPTED (auto wake-up pending) | ADR-0008, `AUTONOMY_AND_ESCALATION.md`, Q-03 |
+| Agent workflow | Lead sole contact, hats one at a time, Advisor at gates, git as bus | ACCEPTED (auto wake-up verified 2026-10-26) | ADR-0008, `AUTONOMY_AND_ESCALATION.md`, Q-03 |
 | Product behavior | Local-first, no sync in v0.x | ACCEPTED | ADR-0001, 0005, 0006 |
 | Platforms | Build 4 OS from day 1; release Android/Windows/macOS first; iOS after paid Apple account; web = demo only | ACCEPTED (framework conditional on spike) | ADR-0009 |
 | MVP scope | Finance core + QuickAdd + Home + simple budget + monthly report + SMS paste/share + backup | OWNER-DECIDED | `MVP_SCOPE.md` |
