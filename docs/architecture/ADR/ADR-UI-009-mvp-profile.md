@@ -1,5 +1,5 @@
 # ADR-UI-009: MVP profile for the UI constitution (lighter gates, same guarantees)
-- **Status:** PROPOSED (the owner approved the idea of an MVP profile on 2026-10-25; the concrete parameters below need his acceptance, AD-02)
+- **Status:** ACCEPTED (product owner accepted the concrete parameters below on 2026-10-26, Q-15, AD-02)
 - **Date:** 2026-10-26
 - **Owner:** Product/Contracts (Agent 1 role) — drafted by Lead architect
 - **Approver:** Product owner

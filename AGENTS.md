@@ -32,7 +32,7 @@ If two sources conflict or an ID is missing: first look it up in `docs/design/SP
 - Do not claim a test passed unless you ran it and pasted the real result.
 - Do not run destructive commands (`rm -rf`, `git reset --hard`, force-push, clean) outside your own task worktree. Check `pwd`, branch and `git status` before mutating commands.
 
-## Definition of done (MVP profile, ADR-UI-009 pending)
+## Definition of done (MVP profile, ADR-UI-009 accepted)
 Acceptance criteria met with evidence; tests green (`dart run tool/ui_check/ui_check.dart` once it exists, plus `flutter test`); Persian RTL and light/dark checked; docs/STATUS updated; PR reviewed by someone other than the author; handoff written from `docs/agents/HANDOFF_TEMPLATE.md`.
 
 ## Escalation (the Lead is the only agent that talks to the human; the Advisor reviews at gates)

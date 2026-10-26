@@ -1,5 +1,5 @@
 # ADR-0005: Optional sync and conflicts
-- **Status:** PROPOSED
+- **Status:** ACCEPTED (product owner, 2026-10-26, Q-15)
 - **Date:** 2026-10-23
 - **Owner:** Data architect
 - **Approver:** Product owner

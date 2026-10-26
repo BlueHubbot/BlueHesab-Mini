@@ -1,5 +1,5 @@
 # ADR-0001: Local-first product behavior
-- **Status:** PROPOSED
+- **Status:** ACCEPTED (product owner, 2026-10-26, Q-15)
 - **Date:** 2026-10-23
 - **Owner:** Lead architect
 - **Approver:** Product owner

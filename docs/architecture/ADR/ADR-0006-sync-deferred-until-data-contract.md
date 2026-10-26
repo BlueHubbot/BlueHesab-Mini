@@ -1,5 +1,5 @@
 # ADR-0006: Defer bidirectional sync until data contracts are ready
-- **Status:** PROPOSED
+- **Status:** ACCEPTED (product owner, 2026-10-26, Q-15)
 - **Date:** 2026-10-23
 - **Owner:** Data architect
 - **Approver:** Product owner

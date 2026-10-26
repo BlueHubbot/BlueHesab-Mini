@@ -14,10 +14,11 @@ Required sections: status/date, context, decision drivers, options, decision, re
 ## Index
 | ADR | Topic | Status |
 |---|---|---|
-| ADR-0001 … ADR-0006 | local-first, framework, storage, AI abstraction, sync | PROPOSED (framework/storage await the spike) |
+| ADR-0001, ADR-0005, ADR-0006 | local-first; sync deferred | ACCEPTED (2026-10-26) |
+| ADR-0002 … ADR-0004 | framework, storage, AI abstraction | PROPOSED (framework/storage await the spike) |
 | ADR-0007 | License: Apache-2.0 | ACCEPTED |
 | ADR-0008 | Agentic workflow | ACCEPTED (some items pending) |
-| ADR-0009 | Platform scope, release order, technology baseline | PROPOSED |
+| ADR-0009 | Platform scope, release order, technology baseline | ACCEPTED (2026-10-26; framework conditional on the spike) |
 | ADR-UI-001 … 008 | see UI spec section 12 | PROPOSED |
-| ADR-UI-009 | MVP profile (reduced gates, same guarantees) | PROPOSED |
+| ADR-UI-009 | MVP profile (reduced gates, same guarantees) | ACCEPTED (2026-10-26) |
 | ADR-UI-010 | SMS entry in QuickAdd, provenance row, uncertainty marker | planned (before the M2 SMS task; Q-14) |

@@ -1,5 +1,5 @@
 # ADR-0009: Platform scope, release order and technology baseline
-- **Status:** PROPOSED (the product owner's decisions of 2026-10-25 are recorded here; acceptance by the owner turns it ACCEPTED; the framework part stays conditional on the spike)
+- **Status:** ACCEPTED (product owner, 2026-10-26, Q-15; records the owner's decisions of 2026-10-25; the framework part stays conditional on the spike)
 - **Date:** 2026-10-26
 - **Owner:** Lead architect
 - **Approver:** Product owner

@@ -6,10 +6,10 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 |---|---|---|---|
 | License | Apache-2.0 | ACCEPTED | ADR-0007 |
 | Agent workflow | Lead sole contact, hats one at a time, Advisor at gates, git as bus | ACCEPTED (auto wake-up pending) | ADR-0008, `AUTONOMY_AND_ESCALATION.md`, Q-03 |
-| Product behavior | Local-first, no sync in v0.x | OWNER-DECIDED | ADR-0001, 0005, 0006 |
-| Platforms | Build 4 OS from day 1; release Android/Windows/macOS first; iOS after paid Apple account; web = demo only | OWNER-DECIDED, ADR PROPOSED | ADR-0009 |
+| Product behavior | Local-first, no sync in v0.x | ACCEPTED | ADR-0001, 0005, 0006 |
+| Platforms | Build 4 OS from day 1; release Android/Windows/macOS first; iOS after paid Apple account; web = demo only | ACCEPTED (framework conditional on spike) | ADR-0009 |
 | MVP scope | Finance core + QuickAdd + Home + simple budget + monthly report + SMS paste/share + backup | OWNER-DECIDED | `MVP_SCOPE.md` |
-| MVP gate profile | Lighter gates, same safety guarantees | PROPOSED | ADR-UI-009 |
+| MVP gate profile | Lighter gates, same safety guarantees | ACCEPTED | ADR-UI-009 |
 | SMS entry UI | Header button, provenance row, uncertainty handling | PROPOSED (ADR to write) | ADR-UI-010, Q-14 |
 | Money | `BigInt` minor units (IRR = rial), stored as decimal TEXT, shown as toman or rial | OWNER-DECIDED | `DATA_MODEL.md` |
 | Dates | UTC instants, `yyyy-MM-dd` dates, Jalali display via central layer | PROPOSED | `DATA_MODEL.md`, ADR-UI-004 |
@@ -42,3 +42,5 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 | 2026-10-26 | Q-04: repository is public (owner switched it before merge of the docs pack) | chat |
 | 2026-10-26 | Q-12: spend cap = Claude Pro plan plus at most USD 15 extra usage per month (owner set the limit in claude.ai settings); Advisor scheduled runs: 2 per day (3 allowed); default effort `high`, `xhigh`/`max` only when a task packet says so | chat |
 | 2026-10-26 | No external AI API provider for now: Lead, Advisor and builders run as Claude sessions on the owner's subscription; H200 stays optional (L2) | chat |
+| 2026-10-26 | Q-15: ADR-0009 and ADR-UI-009 accepted, with ADR-0001/0005/0006 in one batch (Lead's recommendation) | chat |
+| 2026-10-26 | Merging is delegated to the Lead/Integrator when the owner is away: merge only with CI green, mergeable, docs-only or reviewed per autonomy level, and a recorded check; independent review of PR #1 waived by the owner (docs pack already audited in DOCS-X1) | chat |
