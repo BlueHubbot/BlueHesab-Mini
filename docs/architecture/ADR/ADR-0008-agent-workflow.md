@@ -33,7 +33,7 @@ Sequential single-builder work removes merge conflicts and fits the token budget
 Slower than full parallelism but cheaper and safer. Human involvement is reduced to short approvals, not zero. A weaker local Lead may mis-route work, so every gate and every ADR still has an independent reviewer.
 
 ## PENDING verification
-- Automatic wake-up of the Advisor (scheduled task that reads the repo, replies in git, pushes) — see `OPEN_QUESTIONS.md` Q-03. Until verified: the owner sends a one-line "read" message.
+- ~~Automatic wake-up of the Advisor~~ VERIFIED 2026-10-26 (Q-03): a cloud scheduled task on the owner's Claude account fired without owner input, cloned the repo, wrote `ADVISOR_REPLY-000.md` only, pushed `claude/advisor-reply-000` and opened PR #2 (checks §8.1 a–d). Phone notification (§8.1 e) is configured; owner confirmation pending. Schedule: 09:07 and 17:07 Asia/Dubai. Fallback "read" message stays available.
 - Which local model and serving stack on the H200 (Q-01, Q-02, `LOCAL_MODEL_SETUP.md`).
 
 ## Evidence and links
