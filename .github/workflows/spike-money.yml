@@ -1,0 +1,123 @@
+name: Spike T-002 money
+
+# T-002 (SP-02, SP-05, I-01): the spike package spike/money on every desktop
+# OS, its platform-neutral test in Chrome (web = formatting only, ADR-0009),
+# analyzer, the no-float check and a license scan of the spike lockfile
+# (spike/README.md §3). Pins as in ci.yml (SP-6).
+
+on:
+  pull_request:
+    paths:
+      - "spike/money/**"
+      - ".github/workflows/spike-money.yml"
+      - "tool/ci/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-money-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lockfile:
+    name: lockfile present
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Bootstrap only - resolve and print a missing pubspec.lock
+        if: hashFiles('spike/money/pubspec.lock') == ''
+        run: |
+          bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+          export PATH="$RUNNER_TEMP/flutter/bin:$PATH"
+          cd spike/money
+          flutter pub get
+          python3 - <<'PY'
+          import base64, gzip
+          data = base64.b64encode(gzip.compress(open("pubspec.lock", "rb").read(), mtime=0)).decode()
+          parts = [data[i:i + 3000] for i in range(0, len(data), 3000)]
+          for n, part in enumerate(parts, 1):
+              print(f"::notice title=pubspec.lock gzip+base64 {n}/{len(parts)}::{part}")
+          PY
+          echo "::error title=Lockfile::spike/money/pubspec.lock is missing; commit the resolved file"
+          exit 1
+
+  analyze:
+    name: analyze + no-float + license scan
+    needs: lockfile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        working-directory: spike/money
+        run: bash ../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: flutter analyze (spike package)
+        working-directory: spike/money
+        run: bash ../../tool/ci/run_logged.sh "flutter analyze" flutter analyze
+      - name: No double/num on the money path (I-01)
+        working-directory: spike/money
+        run: bash ../../tool/ci/run_logged.sh "no-float check" flutter test test/no_float_test.dart
+      - name: License scan of the spike lockfile (CB-9, SP-11)
+        run: |
+          mkdir -p build/ci
+          (cd spike/money && flutter pub deps --json) > build/ci/spike-deps.json
+          python3 tool/ci/license_scan.py \
+            --deps build/ci/spike-deps.json \
+            --package-config spike/money/.dart_tool/package_config.json \
+            --audit docs/research/OPEN_SOURCE_AUDIT.md \
+            --report build/ci/spike-license-report.md
+      - name: Publish the report in the run summary
+        if: always()
+        run: cat build/ci/spike-license-report.md >> "$GITHUB_STEP_SUMMARY" || true
+
+  test:
+    name: test ${{ matrix.os }}
+    needs: lockfile
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        working-directory: spike/money
+        run: bash ../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: flutter test (VM, real SQLite through drift)
+        working-directory: spike/money
+        run: bash ../../tool/ci/run_logged.sh "flutter test ${{ matrix.os }}" flutter test --reporter expanded
+      - name: Evidence (OS, SQLite version)
+        if: always()
+        working-directory: spike/money
+        run: |
+          if [ -f build/spike-evidence.txt ]; then
+            echo "::notice title=Evidence ${{ matrix.os }}::$(tr '\n' ' ' < build/spike-evidence.txt)"
+          fi
+
+  web:
+    name: test web (Chrome, formatting only)
+    needs: lockfile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        working-directory: spike/money
+        run: bash ../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: flutter test --platform chrome (core only)
+        working-directory: spike/money
+        run: bash ../../tool/ci/run_logged.sh "flutter test chrome" flutter test --platform chrome --reporter expanded test/core_test.dart
