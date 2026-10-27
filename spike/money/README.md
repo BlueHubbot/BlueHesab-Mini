@@ -28,17 +28,20 @@ flutter test --platform chrome test/core_test.dart # web: formatting, JSON, chec
 CI: `.github/workflows/spike-money.yml` (Linux, macOS, Windows, Chrome; analyzer; no-float check; license scan of this lockfile).
 
 ## Results per OS
-Flutter 3.47.8 (Dart 3.13.7), drift 2.35.3, sqlite3 3.8.0. Each line is the job's own annotation in CI run [40533849095](https://github.com/BlueHubbot/BlueHesab-Mini/actions/runs/40533849095).
+Flutter 3.47.8 (Dart 3.13.7), drift 2.35.3, sqlite3 3.8.0. Each line is the job's own annotation in CI run [40539889130](https://github.com/BlueHubbot/BlueHesab-Mini/actions/runs/40539889130).
 
 | Target | Runner | SQLite | Result |
 |---|---|---|---|
 | Linux (VM tests) | ubuntu-24.04 | 3.54.1 | `00:01 +32: All tests passed!` |
-| macOS (VM tests) | macos-15 (15.7.9) | 3.54.1 | `00:02 +32: All tests passed!` |
-| Windows (VM tests) | windows-2025 (Server 2025, build 26100) | 3.54.1 | `00:05 +32: All tests passed!` |
+| macOS (VM tests) | macos-15 (15.7.9) | 3.54.1 | `00:04 +32: All tests passed!` |
+| Windows (VM tests) | windows-2025 (Server 2025, build 26100) | 3.54.1 | `00:06 +32: All tests passed!` |
 | Web demo, Chrome (`test/core_test.dart`, formatting/JSON/checksum only) | ubuntu-24.04 | n/a | `00:01 +21: All tests passed!` |
 | Analyzer, no-float check | ubuntu-24.04 | | `No issues found!` · `2 tests passed` |
 | License scan of `pubspec.lock` | ubuntu-24.04 | | `42 packages · 0 failing` (drift MIT, sqlite3 MIT, the rest BSD-3-Clause/Apache-2.0/SDK) |
-<!-- device rows -->
+| Android emulator (integration test, real file) | ubuntu-24.04, API 35 / Android 15 x86_64, KVM | 3.54.1 | `00:01 +2: All tests passed!` |
+| iOS simulator (integration test, real file) | macos-15, iOS 26.2 | 3.54.1 | `00:19 +2: All tests passed!` |
+
+The device test (`device_app/integration_test/money_device_test.dart`) repeats the round trip and the v1 -> v2 / failing-step rollback / recovery-copy checks; the frozen-fixture comparison runs on the three desktop OSes. The same SQLite 3.54.1 comes from the `sqlite3` build hook on all five native targets.
 
 ## Findings for SPIKE_REPORT (SP-02, SP-05)
 1. **drift does not run migrations in a transaction by itself** (drift docs, migrations / step by step / Transactions). MG-01 therefore needs an explicit `transaction()` around all pending steps; the spike does that and tests a failing step (whole upgrade rolled back, next open upgrades again).
@@ -54,7 +57,8 @@ Flutter 3.47.8 (Dart 3.13.7), drift 2.35.3, sqlite3 3.8.0. Each line is the job'
 ## Open questions
 - Display of the minor digits for non-IRR currencies (always two digits, or trim zeros?) has no rule ID; the spike shows all `minorDigits` and does not decide.
 - SE-08 (overflow message or silence) is unchanged: the parser throws `RangeError` above 18 digits and leaves the UI reaction open.
-- Android and iOS device runs are not part of this first CI step; they need an emulator/simulator job (integration test) in the next step of T-002.
+- Android and iOS ran on an emulator and a simulator, not on physical devices.
+- The device harness lockfile (`device_app/pubspec.lock`) is not license-scanned: `spike_money` is a path dependency without an audit row, and the harness adds only the SDK `integration_test` tree.
 - Concurrent read/write and restore of an older-schema backup (SP-05, BACKUP_RESTORE) are not covered yet.
 
 ## Python reference for the checksum test
