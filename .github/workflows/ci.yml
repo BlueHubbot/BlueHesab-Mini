@@ -1,0 +1,189 @@
+name: CI
+
+# T-001 (SP-01, SP-11, CB-9, ADR-0009 §1): analyze, test, license scan,
+# secret scan, and a build of every target from a clean checkout.
+# Actions are pinned to full commit SHAs (SP-6); Flutter is pinned by commit
+# in tool/ci/flutter_version.env.
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  analyze-test:
+    name: analyze + test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: The checkout stays clean after pub get (no generated drift)
+        run: |
+          if ! git diff --quiet; then
+            git --no-pager diff
+            msg="$(git --no-pager diff | head -n 60 | sed -e 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')"
+            echo "::error title=Dirty tree after pub get::${msg}"
+            exit 1
+          fi
+      - name: Spike code is never imported by the app (spike/README.md)
+        run: |
+          if grep -rnE "spike/|package:spike" lib test --include='*.dart'; then
+            echo "::error title=Spike isolation::lib/ or test/ imports spike code"
+            exit 1
+          fi
+      - name: flutter analyze
+        run: bash tool/ci/run_logged.sh "flutter analyze" flutter analyze
+      - name: flutter test
+        run: bash tool/ci/run_logged.sh "flutter test" flutter test --reporter expanded
+
+  license-scan:
+    name: license scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Self-test of the scanner (negative controls)
+        # GITHUB_ACTIONS is unset so the negative controls do not post annotations.
+        run: env -u GITHUB_ACTIONS python3 tool/ci/test_license_scan.py
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: Scan every resolved package (0 copyleft, 0 unknown)
+        run: |
+          mkdir -p build/ci
+          flutter pub deps --json > build/ci/deps.json
+          python3 tool/ci/license_scan.py \
+            --deps build/ci/deps.json \
+            --package-config .dart_tool/package_config.json \
+            --audit docs/research/OPEN_SOURCE_AUDIT.md \
+            --report build/ci/license-report.md
+      - name: Publish the report in the run summary
+        if: always()
+        run: cat build/ci/license-report.md >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, node24 (SP-6)
+        if: always()
+        with:
+          name: license-report
+          path: build/ci/license-report.md
+          retention-days: 30
+
+  secret-scan:
+    name: secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+        with:
+          fetch-depth: 0
+      - name: Build gitleaks from source at a pinned tag (MIT; Go checksum DB verifies it)
+        env:
+          GITLEAKS_VERSION: v8.30.1
+        run: |
+          go install "github.com/zricethezav/gitleaks/v8@${GITLEAKS_VERSION}"
+          "$(go env GOPATH)/bin/gitleaks" version
+      - name: Scan the full git history
+        run: |
+          mkdir -p build/ci
+          set +e
+          "$(go env GOPATH)/bin/gitleaks" git . --redact --no-banner \
+            --report-format json --report-path build/ci/gitleaks.json
+          code=$?
+          set -e
+          python3 - <<'PY'
+          import json
+          findings = json.load(open("build/ci/gitleaks.json"))
+          print(f"gitleaks findings: {len(findings)}")
+          print(f"::notice title=Secret scan::gitleaks v8.30.1, full history, findings: {len(findings)}")
+          for f in findings[:10]:
+              print(f"::error file={f['File']},line={f['StartLine']},"
+                    f"title=Secret scan::{f['RuleID']} in commit {f['Commit'][:8]}")
+          PY
+          exit $code
+
+  build:
+    name: build ${{ matrix.target }}
+    needs: analyze-test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: android-apk
+            os: ubuntu-24.04
+            command: flutter build apk --release
+            out: build/app/outputs/flutter-apk/app-release.apk
+          - target: web-demo
+            os: ubuntu-24.04
+            command: flutter build web --release
+            out: build/web
+          - target: windows
+            os: windows-2025
+            command: flutter build windows --release
+            out: build/windows/x64/runner/Release
+          - target: macos
+            os: macos-15
+            command: flutter build macos --release
+            out: build/macos/Build/Products/Release/bluehesab_mini.app
+          - target: ios-simulator
+            os: macos-15
+            command: flutter build ios --simulator --debug
+            out: build/ios/iphonesimulator/Runner.app
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0, node24 (SP-6)
+        if: matrix.target == 'android-apk'
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: Build
+        run: bash tool/ci/run_logged.sh "build ${{ matrix.target }}" ${{ matrix.command }}
+      - name: Package the artifact with SHA256SUMS (unsigned; the APK carries the debug key, not for release)
+        env:
+          OUT: ${{ matrix.out }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          mkdir -p dist
+          case "$OUT" in
+            *.app)
+              if command -v ditto >/dev/null; then
+                ditto -c -k --keepParent "$OUT" "dist/$TARGET.zip"
+              fi ;;
+            *.apk) cp "$OUT" "dist/bluehesab-mini-$TARGET-debug-signed.apk" ;;
+            *)
+              if [ "$RUNNER_OS" = "Windows" ]; then
+                pwsh -NoProfile -Command "Compress-Archive -Path '$OUT/*' -DestinationPath 'dist/$TARGET.zip'"
+              else
+                (cd "$OUT" && zip -qr "$GITHUB_WORKSPACE/dist/$TARGET.zip" .)
+              fi ;;
+          esac
+          (cd dist && sha256sum ./* > SHA256SUMS 2>/dev/null || shasum -a 256 ./* > SHA256SUMS)
+          cat dist/SHA256SUMS
+          echo "::notice title=SHA256SUMS ${TARGET}::$(tr '\n' ' ' < dist/SHA256SUMS)"
+          ls -l dist
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, node24 (SP-6)
+        with:
+          name: ${{ matrix.target }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14

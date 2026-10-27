@@ -1,0 +1,63 @@
+# Static analysis for BlueHesab Mini (T-001).
+# No lint package is used, so the rule set adds no dependency (CB-9).
+# `flutter analyze` treats every issue below as a CI failure.
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    missing_required_param: error
+    missing_return: error
+  exclude:
+    # Spike code is analysed inside its own package (spike/README.md).
+    - spike/**
+    - build/**
+    # Platform folders: Flutter 3.47.8 adds these on pub get (CI checks the
+    # tree stays clean).
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+
+linter:
+  rules:
+    - always_declare_return_types
+    - annotate_overrides
+    - avoid_dynamic_calls
+    - avoid_empty_else
+    - avoid_print
+    - avoid_relative_lib_imports
+    - avoid_returning_null_for_void
+    - avoid_types_as_parameter_names
+    - avoid_unnecessary_containers
+    - await_only_futures
+    - camel_case_types
+    - cancel_subscriptions
+    - close_sinks
+    - curly_braces_in_flow_control_structures
+    - directives_ordering
+    - empty_catches
+    - empty_constructor_bodies
+    - file_names
+    - hash_and_equals
+    - library_private_types_in_public_api
+    - no_duplicate_case_values
+    - non_constant_identifier_names
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_fields
+    - prefer_final_locals
+    - prefer_single_quotes
+    - sort_child_properties_last
+    - test_types_in_equals
+    - throw_in_finally
+    - type_annotate_public_apis
+    - unawaited_futures
+    - unnecessary_const
+    - unnecessary_new
+    - unnecessary_null_checks
+    - unrelated_type_equality_checks
+    - use_key_in_widget_constructors
+    - valid_regexps

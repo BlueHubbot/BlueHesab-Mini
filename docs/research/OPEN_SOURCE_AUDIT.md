@@ -11,12 +11,13 @@ Canonical repo · checked date · version/commit · release activity · exact SP
 | drift (pub.dev) | SQLite layer | MIT; v2.35.3 published 2026-10-23; platforms Android, iOS, Linux, macOS, Web, Windows; verified publisher simonbinder.eu | pub.dev/packages/drift (read 2026-10-26) | PROTOTYPE → ADOPT after spike (ADR-0003) |
 | shamsi_date (pub.dev) | Jalali conversion | BSD-3-Clause (detected by pub scorer); v1.0.2; all 6 platforms; 140/140 pub points | pub-web.flutter-io.cn mirror score page (read 2026-10-26) | PROTOTYPE: must pass DT-05 vectors (ADR-UI-004); wrap behind the central date layer |
 | Vazirmatn font | Persian UI font | SIL OFL 1.1 (`OFL.txt`); built on DejaVu Sans (public domain); main build merges Roboto for Latin glyphs, a Non-Latin build exists | jsDelivr README v32.0.0 (read 2026-10-26) | PROTOTYPE: ship Non-Latin or Latin-merged build per size test; keep `OFL.txt` in assets/licenses; do not sell the font alone or rename rules per OFL (re-read OFL.txt) |
+| Flutter SDK 3.47.8 (git tag, commit `737ba8f8…`) | UI framework, SDK packages (`flutter`, `flutter_test`, `sky_engine` and their Dart-team transitive packages) | BSD-3-Clause (`LICENSE` at the tag: "Copyright 2014 The Flutter Authors"); `sky_engine` carries the engine's aggregated third-party notices, listed by the CI scan as `SDK_NOTICES`; transitive packages are classified on every PR by `tool/ci/license_scan.py` | github.com/flutter/flutter `LICENSE` at refs/tags/3.47.8 (read 2026-10-26, T-001) | PROTOTYPE (spike, ADR-0009 §3); Security & License hat to review this row |
 | Google Play SMS policy | Capture design | Apps on Play needing sensitive SMS/call-log data generally must be the user's **default handler** (e.g. default SMS app before requesting `READ_SMS`), unless an exception in the Play Console policy applies | developer.android.com default-handlers (read 2026-10-26) | Confirms MVP choice: **no SMS permission**, paste/share only (CAPTURE_PIPELINE §6) |
 
 ## B. From memory — verify before any use
 | Candidate | Intended use | Stance | Believed license (verify) | Must verify |
 |---|---|---|---|---|
-| Flutter SDK | UI | PROTOTYPE (spike) | BSD-3-Clause | platform builds, Windows/macOS accessibility, RTL, golden stability |
+| Flutter SDK | UI | PROTOTYPE (spike) | BSD-3-Clause (license verified, see §A) | platform builds, Windows/macOS accessibility, RTL, golden stability |
 | Riverpod, go_router, flutter_localizations | state, routing, l10n | CANDIDATE | MIT/BSD (Flutter team for go_router) | maintenance, RTL, version pins |
 | Lucide icons | icon set | CANDIDATE (ADR-UI-005) | ISC | exact package, glyph coverage |
 | Actual Budget | finance behavior reference | REFERENCE_ONLY | MIT | read-only study; sync model not used |
