@@ -1,0 +1,23 @@
+# T-002 device test harness (SP-02, SP-05 on Android and iOS). Not product.
+# Platform folders are generated in CI by `flutter create`; only the SDK and
+# the spike package are dependencies (CB-9).
+name: spike_money_device
+description: Runs the T-002 spike checks on an Android emulator and an iOS simulator.
+publish_to: none
+version: 0.0.1+1
+
+environment:
+  sdk: ^3.11.0
+  flutter: 3.47.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+  spike_money:
+    path: ..
+
+dev_dependencies:
+  integration_test:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter

@@ -10,6 +10,8 @@ analyzer:
     missing_return: error
   exclude:
     - build/**
+    # Separate package; analysed in its own CI job (device tests).
+    - device_app/**
 
 linter:
   rules:

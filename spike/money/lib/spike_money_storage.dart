@@ -5,6 +5,7 @@ library;
 export 'spike_money_core.dart';
 export 'src/backup_io.dart';
 export 'src/money_store.dart';
+export 'src/open.dart';
 export 'src/recovery.dart';
 export 'src/schema.dart';
 export 'src/spike_database.dart';
