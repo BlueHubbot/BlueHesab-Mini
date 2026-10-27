@@ -162,19 +162,26 @@ jobs:
           image="system-images;android-35;google_apis;x86_64"
           (yes || true) | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
           bash tool/ci/run_logged.sh "sdkmanager" "$sdk/cmdline-tools/latest/bin/sdkmanager" "emulator" "platform-tools" "$image"
-          echo no | "$sdk/cmdline-tools/latest/bin/avdmanager" create avd -n spike -k "$image" --force
+          # One AVD folder for avdmanager and the emulator (they disagreed by default).
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo no | "$sdk/cmdline-tools/latest/bin/avdmanager" create avd -n spike -k "$image" \
+            -p "$ANDROID_AVD_HOME/spike.avd" --force
+          echo "::notice title=AVDs::$("$sdk/emulator/emulator" -list-avds | tr '\n' ' ')"
           echo "::notice title=emulator -accel-check::$("$sdk/emulator/emulator" -accel-check 2>&1 | tr '\n' ' ' | cut -c1-300)"
           nohup "$sdk/emulator/emulator" -avd spike -no-window -no-audio -no-boot-anim -no-snapshot \
             -gpu swiftshader_indirect -no-metrics > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          emulator_pid=$!
           booted=0
           for _ in $(seq 1 120); do
+            kill -0 "$emulator_pid" 2>/dev/null || break
             state="$("$sdk/platform-tools/adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
             if [ "$state" = "1" ]; then booted=1; break; fi
             sleep 5
           done
           if [ "$booted" != 1 ]; then
             msg="$(tail -n 40 "$RUNNER_TEMP/emulator.log" | cut -c1-200 | sed -e 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')"
-            echo "::error title=Android emulator did not boot in 10 min::${msg}"
+            echo "::error title=Android emulator did not boot::${msg}"
             exit 1
           fi
           echo "::notice title=Android emulator::API $("$sdk/platform-tools/adb" shell getprop ro.build.version.sdk | tr -d '\r'), Android $("$sdk/platform-tools/adb" shell getprop ro.build.version.release | tr -d '\r')"
