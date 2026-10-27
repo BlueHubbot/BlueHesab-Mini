@@ -28,7 +28,17 @@ flutter test --platform chrome test/core_test.dart # web: formatting, JSON, chec
 CI: `.github/workflows/spike-money.yml` (Linux, macOS, Windows, Chrome; analyzer; no-float check; license scan of this lockfile).
 
 ## Results per OS
-Filled from CI evidence when the run is green; see the PR for links.
+Flutter 3.47.8 (Dart 3.13.7), drift 2.35.3, sqlite3 3.8.0. Each line is the job's own annotation in CI run [40533849095](https://github.com/BlueHubbot/BlueHesab-Mini/actions/runs/40533849095).
+
+| Target | Runner | SQLite | Result |
+|---|---|---|---|
+| Linux (VM tests) | ubuntu-24.04 | 3.54.1 | `00:01 +32: All tests passed!` |
+| macOS (VM tests) | macos-15 (15.7.9) | 3.54.1 | `00:02 +32: All tests passed!` |
+| Windows (VM tests) | windows-2025 (Server 2025, build 26100) | 3.54.1 | `00:05 +32: All tests passed!` |
+| Web demo, Chrome (`test/core_test.dart`, formatting/JSON/checksum only) | ubuntu-24.04 | n/a | `00:01 +21: All tests passed!` |
+| Analyzer, no-float check | ubuntu-24.04 | | `No issues found!` · `2 tests passed` |
+| License scan of `pubspec.lock` | ubuntu-24.04 | | `42 packages · 0 failing` (drift MIT, sqlite3 MIT, the rest BSD-3-Clause/Apache-2.0/SDK) |
+<!-- device rows -->
 
 ## Findings for SPIKE_REPORT (SP-02, SP-05)
 1. **drift does not run migrations in a transaction by itself** (drift docs, migrations / step by step / Transactions). MG-01 therefore needs an explicit `transaction()` around all pending steps; the spike does that and tests a failing step (whole upgrade rolled back, next open upgrades again).
