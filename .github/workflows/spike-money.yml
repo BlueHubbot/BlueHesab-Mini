@@ -144,7 +144,12 @@ jobs:
       - name: Generate platform folders (not committed) and resolve packages
         working-directory: spike/money/device_app
         run: |
-          flutter create --no-pub --platforms=android,ios --org io.github.bluehubbot --project-name spike_money_device .
+          # Generated in an empty folder, then only android/ and ios/ are copied in,
+          # so nothing committed is touched by the template.
+          bash ../../../tool/ci/run_logged.sh "flutter create" flutter create --no-pub \
+            --platforms=android,ios --org io.github.bluehubbot --project-name spike_money_device \
+            "$RUNNER_TEMP/generated"
+          cp -R "$RUNNER_TEMP/generated/android" "$RUNNER_TEMP/generated/ios" .
           bash ../../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
       - name: Start an Android emulator (API 35, x86_64, KVM)
         run: |
@@ -188,7 +193,12 @@ jobs:
       - name: Generate platform folders (not committed) and resolve packages
         working-directory: spike/money/device_app
         run: |
-          flutter create --no-pub --platforms=android,ios --org io.github.bluehubbot --project-name spike_money_device .
+          # Generated in an empty folder, then only android/ and ios/ are copied in,
+          # so nothing committed is touched by the template.
+          bash ../../../tool/ci/run_logged.sh "flutter create" flutter create --no-pub \
+            --platforms=android,ios --org io.github.bluehubbot --project-name spike_money_device \
+            "$RUNNER_TEMP/generated"
+          cp -R "$RUNNER_TEMP/generated/android" "$RUNNER_TEMP/generated/ios" .
           bash ../../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
       - name: Boot an iPhone simulator (newest iOS runtime)
         run: |
