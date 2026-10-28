@@ -34,6 +34,13 @@ final List<({int year, GregorianDate nowruz, int days})> icuRows = () {
 /// must still agree with each other there.
 const Set<int> knownIcuDivergence = <int>{1502};
 
+/// Appends one evidence line for the CI summary (build/ is git-ignored).
+void recordEvidence(String line) {
+  File('build/spike-evidence.txt')
+    ..createSync(recursive: true)
+    ..writeAsStringSync('$line\n', mode: FileMode.append);
+}
+
 void main() {
   test('ICU fixture: Nowruz and year length per Jalali year', () {
     expect(icuRows.first.year, 1279);
