@@ -38,18 +38,18 @@ List<int> _withChecksum(List<int> bytes) {
   ));
 }
 
+/// Runs the stage; unless [generated] is given, the generated file is made
+/// fresh from [json] so a case is not also an MC-02 failure (the .g.dart
+/// file carries the checksum).
 StageResult _run(
   List<int> json, {
   List<int>? generated,
-  bool freshGenerated = false,
   List<int>? manifest,
   Profile profile = Profile.mvp,
 }) {
   return runTokensStage(
     jsonBytes: json,
-    generatedBytes: freshGenerated
-        ? utf8.encode(generateFromBytes(json)!)
-        : (generated ?? _repoGenerated),
+    generatedBytes: generated ?? utf8.encode(generateFromBytes(json)!),
     manifestBytes: manifest ?? _repoManifest,
     profile: profile,
   );
@@ -58,7 +58,7 @@ StageResult _run(
 void main() {
   group('repository files', () {
     test('the tokens stage passes on the repository (AX-08 a)', () {
-      final StageResult r = _run(_repoJson);
+      final StageResult r = _run(_repoJson, generated: _repoGenerated);
       expect(r.findings, isEmpty, reason: r.report.join('\n'));
       expect(r.report.last, 'Result: PASS');
     });
@@ -78,7 +78,8 @@ void main() {
 
     test('210 contrast checks, groups and minima are reported (VT-02, VT-03)',
         () {
-      final List<String> report = _run(_repoJson).report;
+      final List<String> report =
+          _run(_repoJson, generated: _repoGenerated).report;
       expect(
         report,
         contains('  total VTG-01…VTG-09: 210 checks (105 per theme); '
@@ -140,7 +141,7 @@ void main() {
         '"text-disabled": "#94A3B8"',
         '"text-disabled": "#94A3B9"',
       );
-      expect(_run(json, freshGenerated: true).failedRules, <String>['VT-01']);
+      expect(_run(json).failedRules, <String>['VT-01']);
     });
 
     test('hand-edited design_tokens.g.dart fails MC-02', () {
@@ -166,7 +167,7 @@ void main() {
         '"background": "#0B1220"',
         '"background": "#000000"',
       ));
-      expect(_run(json, freshGenerated: true).failedRules, contains('TK-08'));
+      expect(_run(json).failedRules, contains('TK-08'));
     });
 
     test('a pair just under its threshold fails with the group ID', () {
@@ -175,7 +176,7 @@ void main() {
         '"text-secondary": "#64748B"',
         '"text-secondary": "#757575"',
       ));
-      final StageResult r = _run(json, freshGenerated: true);
+      final StageResult r = _run(json);
       expect(r.failedRules, contains('VTG-01'));
       expect(
         r.findings.where((Finding f) => f.rule == 'VTG-01').first.message,
@@ -210,7 +211,7 @@ void main() {
         '"text-disabled": "#94A3B8"',
         '"text-disabled": "#94A"',
       ));
-      expect(_run(json, freshGenerated: true).failedRules, <String>['VT-01']);
+      expect(_run(json).failedRules, <String>['VT-01']);
     });
 
     test('a wrong count-per-theme fails VT-03', () {
