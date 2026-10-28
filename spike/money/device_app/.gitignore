@@ -1,0 +1,7 @@
+# Platform folders and the default test are generated in CI by
+# `flutter create` (spike-money.yml, device jobs) and never committed.
+android/
+ios/
+test/
+.metadata
+*.iml
