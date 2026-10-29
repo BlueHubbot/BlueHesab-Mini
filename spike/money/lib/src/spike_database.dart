@@ -74,6 +74,10 @@ class SpikeDatabase extends GeneratedDatabase {
   @override
   int get schemaVersion => _migrations.length;
 
+  /// The migration steps of this build, version 1 first (read-only; used by
+  /// the staged restore of older backups, T-006).
+  List<Migration> get migrations => List.unmodifiable(_migrations);
+
   @override
   Iterable<TableInfo<Table, Object?>> get allTables => const [];
 
