@@ -1,0 +1,20 @@
+# T-004 spike package (SP-04, DT-05; spike/README.md). Evidence, not product.
+# Dependency rule (CB-9): shamsi_date has its row in
+# docs/research/OPEN_SOURCE_AUDIT.md (BSD-3-Clause, v1.0.2, PROTOTYPE).
+# Everything else is the Flutter SDK or a transitive package that
+# tool/ci/license_scan.py classifies on every PR.
+name: spike_jalali
+description: T-004 spike, one central Jalali calendar port with two implementations.
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ^3.11.0
+  flutter: 3.47.8
+
+dependencies:
+  shamsi_date: 1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
