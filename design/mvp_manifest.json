@@ -1,0 +1,7 @@
+{
+  "profile": "mvp",
+  "components": ["Button", "IconButton", "TextField", "NumberField", "FieldMessage", "CurrencyAmount", "SummaryCard", "ListCard", "ListRow", "DayRing", "PulseDot", "Chip", "Tabs", "BottomSheet", "Dialog", "Popover", "QuickAdd", "EmptyState", "ErrorState", "Skeleton", "Toast", "PageHeader", "ResponsiveList", "Checkbox", "Switch", "SwitchRow", "Select", "DatePicker", "Divider", "Tooltip", "NumericCell", "BidiText", "FilterBar", "ChartContainer", "ChartDataTable"],
+  "destinations": ["home", "accounting", "reports", "settings", "budget"],
+  "pages": [],
+  "quickAddTypes": ["expense", "income", "transfer"]
+}
