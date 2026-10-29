@@ -18,11 +18,16 @@ import 'package:spike_money/spike_money_storage.dart';
 import 'support.dart';
 
 /// A connection in its own isolate with WAL and the given busy timeout.
-SpikeDatabase openShared(File file, {required int busyMs}) {
+SpikeDatabase openShared(
+  File file, {
+  required int busyMs,
+  bool log = false,
+}) {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   return SpikeDatabase(
     NativeDatabase.createInBackground(
       file,
+      logStatements: log,
       setup: (raw) {
         raw.execute('PRAGMA journal_mode = WAL');
         raw.execute('PRAGMA busy_timeout = $busyMs');
@@ -92,6 +97,64 @@ void main() {
     expect(await db.userVersion(), 2);
     return db;
   }
+
+  test('diagnostics (records only): busy_timeout, compile options, lock '
+      'wait inside a drift transaction', () async {
+    final a = openShared(file, busyMs: 5000, log: true);
+    open.add(a);
+    expect(await a.userVersion(), 2);
+    final b = openShared(file, busyMs: 5000, log: true);
+    open.add(b);
+    expect(await b.userVersion(), 2);
+
+    Future<String> one(SpikeDatabase db, String sql) async {
+      final row = await db.customSelect(sql).getSingle();
+      return '${row.data.values.first}';
+    }
+
+    final facts = <String>[
+      'busy_a=${await one(a, 'PRAGMA busy_timeout')}',
+      'busy_b=${await one(b, 'PRAGMA busy_timeout')}',
+      'locking=${await one(a, 'PRAGMA locking_mode')}',
+      for (final o in ['HAVE_USLEEP', 'ENABLE_SETLK_TIMEOUT', 'THREADSAFE=1',
+          'THREADSAFE=2', 'DEFAULT_WAL_SYNCHRONOUS=1'])
+        '$o=${await one(a, "SELECT sqlite_compileoption_used('$o')")}',
+    ];
+
+    Future<String> tryWrite(SpikeDatabase db, String id) async {
+      final watch = Stopwatch()..start();
+      try {
+        await addAccount(db, id);
+        return 'ok@${watch.elapsedMilliseconds}ms';
+      } on Object catch (e) {
+        final text = '$e'.split('\n').first;
+        return 'error@${watch.elapsedMilliseconds}ms:'
+            '${text.length > 60 ? text.substring(0, 60) : text}';
+      }
+    }
+
+    // 1. b in a drift transaction that only read; a writes.
+    final outside = Zone.current;
+    await b.transaction(() async {
+      await accountCount(b);
+      facts.add('write_during_drift_read_tx='
+          '${await outside.run(() => tryWrite(a, 'd-1'))}');
+    });
+    // 2. b in a manual BEGIN DEFERRED read; a writes.
+    await b.customStatement('BEGIN DEFERRED');
+    await accountCount(b);
+    facts.add('write_during_manual_deferred_read='
+        '${await tryWrite(a, 'd-2')}');
+    facts.add('count_in_manual_read_after=${await accountCount(b)}');
+    await b.customStatement('COMMIT');
+    // 3. b holds a manual write lock (BEGIN IMMEDIATE); a writes.
+    await b.customStatement('BEGIN IMMEDIATE');
+    facts.add('write_during_manual_immediate=${await tryWrite(a, 'd-3')}');
+    await b.customStatement('COMMIT');
+
+    recordEvidence('concurrency_diag os=${Platform.operatingSystem} '
+        '${facts.join(' ')}');
+  });
 
   test('both connections use WAL; a read transaction is a stable snapshot '
       'while the other connection commits', () async {
