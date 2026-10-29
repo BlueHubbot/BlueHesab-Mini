@@ -18,16 +18,11 @@ import 'package:spike_money/spike_money_storage.dart';
 import 'support.dart';
 
 /// A connection in its own isolate with WAL and the given busy timeout.
-SpikeDatabase openShared(
-  File file, {
-  required int busyMs,
-  bool log = false,
-}) {
+SpikeDatabase openShared(File file, {required int busyMs}) {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   return SpikeDatabase(
     NativeDatabase.createInBackground(
       file,
-      logStatements: log,
       setup: (raw) {
         raw.execute('PRAGMA journal_mode = WAL');
         raw.execute('PRAGMA busy_timeout = $busyMs');
@@ -100,10 +95,10 @@ void main() {
 
   test('diagnostics (records only): busy_timeout, compile options, lock '
       'wait inside a drift transaction', () async {
-    final a = openShared(file, busyMs: 5000, log: true);
+    final a = openShared(file, busyMs: 5000);
     open.add(a);
     expect(await a.userVersion(), 2);
-    final b = openShared(file, busyMs: 5000, log: true);
+    final b = openShared(file, busyMs: 5000);
     open.add(b);
     expect(await b.userVersion(), 2);
 
@@ -156,30 +151,51 @@ void main() {
         '${facts.join(' ')}');
   });
 
-  test('both connections use WAL; a read transaction is a stable snapshot '
-      'while the other connection commits', () async {
+  test('WAL: a read transaction opened with BEGIN DEFERRED is a stable '
+      'snapshot while the other connection commits', () async {
     final a = await connect();
     final b = await connect();
     expect(await journalMode(a), 'wal');
     expect(await journalMode(b), 'wal');
     await addAccount(a, 'acc-1');
 
-    late int before;
-    late int after;
-    final outside = Zone.current;
-    await b.transaction(() async {
-      before = await accountCount(b);
-      // a commits while b's snapshot is open
-      await outside.run(() => addAccount(a, 'acc-2'));
-      after = await accountCount(b);
-    });
+    await b.customStatement('BEGIN DEFERRED');
+    final before = await accountCount(b); // the snapshot starts here
+    await addAccount(a, 'acc-2'); // a commits while b's snapshot is open
+    final after = await accountCount(b);
+    await b.customStatement('COMMIT');
+
     expect(before, 1);
     expect(after, 1, reason: 'the snapshot must not change inside it');
     expect(await accountCount(b), 2, reason: 'visible once b ends its read');
   });
 
-  test('writer/writer: with busy_timeout the second writer waits for the '
-      'first commit; with busy_timeout 0 it fails at once', () async {
+  test('finding: drift transaction() takes the write lock at once, so even '
+      'a read-only drift transaction blocks writers on other connections',
+      () async {
+    final b = await connect();
+    final impatient = await connect(busyMs: 0);
+    final outside = Zone.current;
+
+    Object? error;
+    await b.transaction(() async {
+      await accountCount(b);
+      try {
+        await outside.run(() => addAccount(impatient, 'blocked'));
+      } on Object catch (e) {
+        error = e;
+      }
+    });
+    expect(error, isLocked);
+    expect(await hasAccount(b, 'blocked'), isFalse);
+    // Once the drift transaction has ended the same write succeeds.
+    await addAccount(impatient, 'after');
+    expect(await hasAccount(b, 'after'), isTrue);
+  });
+
+  test('writer/writer: busy_timeout 0 fails at once; an app-level retry '
+      'gets the second write in after the first commit on every OS',
+      () async {
     final a = await connect();
     final b = await connect();
     final impatient = await connect(busyMs: 0);
@@ -196,9 +212,27 @@ void main() {
     // busy_timeout = 0: SQLITE_BUSY at once, nothing stored.
     await expectLater(addAccount(impatient, 'w-zero'), throwsA(isLocked));
 
-    // busy_timeout = 5000: waits in its own isolate until a commits.
+    // busy_timeout = 5000 plus a Dart-side retry (25 ms steps, 30 s cap):
+    // SQLite's own wait is not relied on (it gives up early on Linux).
     final watch = Stopwatch()..start();
-    final second = addAccount(b, 'w-b');
+    var retries = 0;
+    Future<void> retrying() async {
+      while (true) {
+        try {
+          await addAccount(b, 'w-b');
+          return;
+        } on Object catch (e) {
+          if (!isLocked.matches(e, <Object?, Object?>{}) ||
+              watch.elapsed > const Duration(seconds: 30)) {
+            rethrow;
+          }
+          retries++;
+          await Future<void>.delayed(const Duration(milliseconds: 25));
+        }
+      }
+    }
+
+    final second = retrying();
     await Future<void>.delayed(const Duration(milliseconds: 300));
     release.complete();
     await first;
@@ -210,8 +244,8 @@ void main() {
     expect(await hasAccount(b, 'w-b'), isTrue);
     expect(await hasAccount(b, 'w-zero'), isFalse);
     recordEvidence('concurrency os=${Platform.operatingSystem} '
-        'second_writer_waited_ms=${watch.elapsedMilliseconds} '
-        'busy0=locked sqlite=${await b.sqliteVersion()}');
+        'second_writer_ms=${watch.elapsedMilliseconds} '
+        'app_retries=$retries busy0=locked');
   });
 
   test('a rolled-back write is never visible to the other connection',
@@ -241,21 +275,20 @@ void main() {
     final a = await connect();
     final b = await connect();
 
+    await b.customStatement('BEGIN DEFERRED');
+    await accountCount(b); // starts b's read snapshot
+    await addAccount(a, 'snap-a'); // a commits a newer version
     Object? error;
-    final outside = Zone.current;
     try {
-      await b.transaction(() async {
-        await accountCount(b); // starts b's read snapshot (deferred BEGIN)
-        // a commits a newer version
-        await outside.run(() => addAccount(a, 'snap-a'));
-        await addAccount(b, 'snap-b'); // b cannot upgrade its old snapshot
-      });
+      await addAccount(b, 'snap-b'); // b cannot upgrade its old snapshot
     } on Object catch (e) {
       error = e;
     }
+    await b.customStatement('ROLLBACK');
+
     expect(error, isLocked);
-    expect(await hasAccount(a, 'snap-a'), isTrue);
-    expect(await hasAccount(a, 'snap-b'), isFalse);
+    expect(await hasAccount(b, 'snap-a'), isTrue);
+    expect(await hasAccount(b, 'snap-b'), isFalse);
     recordEvidence('concurrency read_then_write_after_commit=locked '
         '(SQLITE_BUSY_SNAPSHOT; product: one writer or BEGIN IMMEDIATE)');
   });
