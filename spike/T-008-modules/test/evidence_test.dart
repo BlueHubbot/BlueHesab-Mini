@@ -42,6 +42,10 @@ void main() {
       'cupertino_ui',
       'logging',
       'flutter_web_plugins',
+      'flutter_localizations',
+      'intl',
+      'listen',
+      'uuid',
     ];
     final String line = <String>[
       'os=${Platform.operatingSystem}',
