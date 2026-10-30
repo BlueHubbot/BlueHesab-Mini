@@ -1,0 +1,24 @@
+# T-008 spike package (SP-12, MDC-A3, MDC-T7; spike/README.md).
+# Evidence, not product.
+# Dependency rule (CB-9): flutter_riverpod (MIT, v3.4.3) and go_router
+# (BSD-3-Clause, v18.1.0) have their rows in docs/research/OPEN_SOURCE_AUDIT.md
+# (PROTOTYPE, T-005). Everything else is the Flutter SDK or a transitive
+# package that tool/ci/license_scan.py classifies on every PR.
+name: spike_modules
+description: T-008 spike, module registry toy over flutter_riverpod and go_router.
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ^3.11.0
+  flutter: 3.47.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: 3.4.3
+  go_router: 18.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
