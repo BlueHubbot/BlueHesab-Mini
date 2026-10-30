@@ -85,6 +85,7 @@ jobs:
         run: |
           flutter pub deps --style=compact --no-dev | tee ../../build/ci/spike-deps.txt
           { echo '```'; cat ../../build/ci/spike-deps.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=Runtime dependency graph::$(grep -E '^- ' ../../build/ci/spike-deps.txt | tr '\n' ';')"
 
   test:
     name: test ${{ matrix.os }}
