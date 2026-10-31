@@ -132,7 +132,7 @@ jobs:
     name: compare (3 runs, compare mode, exactness)
     needs: generate
     # Runs when the three Linux runs succeeded, whatever macOS did.
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && needs.generate.result == 'success' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
