@@ -44,3 +44,4 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 | 2026-10-26 | No external AI API provider for now: Lead, Advisor and builders run as Claude sessions on the owner's subscription; H200 stays optional (L2) | chat |
 | 2026-10-26 | Q-15: ADR-0009 and ADR-UI-009 accepted, with ADR-0001/0005/0006 in one batch (Lead's recommendation) | chat |
 | 2026-10-26 | Merging is delegated to the Lead/Integrator when the owner is away: merge only with CI green, mergeable, docs-only or reviewed per autonomy level, and a recorded check; independent review of PR #1 waived by the owner (docs pack already audited in DOCS-X1) | chat |
+| 2026-10-31 | Style Guide web demo (tokens slice) may be published on GitHub Pages as a development page (not a release); T-010 written by the Lead, to run after the open PRs #12–#14 | chat |
