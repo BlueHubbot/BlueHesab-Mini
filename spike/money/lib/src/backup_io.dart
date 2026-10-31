@@ -7,7 +7,8 @@ import 'backup_format.dart';
 import 'canonical_json.dart';
 import 'spike_database.dart';
 
-/// Backup export and restore for the spike database (schema v2 fields).
+/// Backup export and restore for the spike database. Export writes the
+/// field set of the open schema version (v1 code writes v1 files, T-006).
 extension BackupIo on SpikeDatabase {
   /// The backup file content: canonical JSON with its checksum.
   Future<String> exportBackup({
@@ -15,11 +16,12 @@ extension BackupIo on SpikeDatabase {
     String appVersion = 'spike-T-002',
   }) async {
     final accounts = await _select(
-      'SELECT ${accountFields.keys.join(', ')} FROM accounts '
+      'SELECT ${accountFieldsFor(schemaVersion).keys.join(', ')} FROM accounts '
       'WHERE deleted_at IS NULL ORDER BY id',
     );
     final transactions = await _select(
-      'SELECT ${transactionFields.keys.join(', ')} FROM transactions '
+      'SELECT ${transactionFieldsFor(schemaVersion).keys.join(', ')} '
+      'FROM transactions '
       'WHERE deleted_at IS NULL ORDER BY id',
     );
     return canonicalJson(
@@ -38,10 +40,11 @@ extension BackupIo on SpikeDatabase {
   Future<void> importBackup(String text) async {
     final backup = validateBackup(text, supportedSchema: schemaVersion);
     if (backup.schemaVersion != schemaVersion) {
-      // Spike limit: only same-version files; upgrading old files is M2 work.
+      // Older files go through restoreBackup (backup_upgrade.dart), which
+      // stages them at their own version and runs the migrations (T-006).
       throw BackupRejectedException(
         BackupRejection.badField,
-        'spike restores schema v$schemaVersion only',
+        'importBackup takes schema v$schemaVersion only; use restoreBackup',
       );
     }
     await transaction(() async {
@@ -55,10 +58,14 @@ extension BackupIo on SpikeDatabase {
           'restore needs an empty database in the spike',
         );
       }
-      await _insertAll('accounts', accountFields.keys, backup.accounts);
+      await _insertAll(
+        'accounts',
+        accountFieldsFor(schemaVersion).keys,
+        backup.accounts,
+      );
       await _insertAll(
         'transactions',
-        transactionFields.keys,
+        transactionFieldsFor(schemaVersion).keys,
         backup.transactions,
       );
     });
