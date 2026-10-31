@@ -1,0 +1,210 @@
+name: Spike T-011 goldens
+
+# T-011 (SP-06, GM-01): golden stability. Three fresh ubuntu-24.04 runners
+# generate the goldens of spike/T-011-goldens with the pinned Flutter; a
+# fourth runner checks that the three SHA256SUMS are identical, compares
+# run 1's goldens in compare mode, and checks that a sub-pixel mutation is
+# caught (no threshold). One macOS run is for information only (GM-01 never
+# makes or compares goldens there). Goldens are never committed: they move
+# between jobs as artifacts, fetched with the runner's preinstalled gh CLI
+# (no new action, CB-9). Pins as in ci.yml (SP-6).
+
+on:
+  pull_request:
+    paths:
+      - "spike/T-011-goldens/**"
+      - ".github/workflows/spike-goldens.yml"
+      - "tool/ci/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-goldens-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lockfile:
+    name: lockfiles present
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Bootstrap only - resolve and print a missing pubspec.lock
+        if: hashFiles('spike/T-011-goldens/pubspec.lock') == ''
+        run: |
+          bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+          export PATH="$RUNNER_TEMP/flutter/bin:$PATH"
+          for pkg in spike/T-011-goldens; do
+            [ -f "$pkg/pubspec.lock" ] && continue
+            (cd "$pkg" && flutter pub get)
+            PKG="$pkg" python3 - <<'PY'
+          import base64, gzip, os
+          pkg = os.environ["PKG"]
+          data = base64.b64encode(gzip.compress(open(f"{pkg}/pubspec.lock", "rb").read(), mtime=0)).decode()
+          parts = [data[i:i + 3000] for i in range(0, len(data), 3000)]
+          for n, part in enumerate(parts, 1):
+              print(f"::notice title={pkg}/pubspec.lock gzip+base64 {n}/{len(parts)}::{part}")
+          PY
+            echo "::error title=Lockfile::$pkg/pubspec.lock is missing; commit the resolved file"
+            missing=1
+          done
+          exit "${missing:-0}"
+
+  analyze:
+    name: analyze + license scan
+    needs: lockfile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        working-directory: spike/T-011-goldens
+        run: bash ../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: flutter analyze (spike package)
+        working-directory: spike/T-011-goldens
+        run: bash ../../tool/ci/run_logged.sh "flutter analyze" flutter analyze
+      - name: License scan of the spike lockfile (CB-9, SP-11)
+        run: |
+          mkdir -p build/ci
+          (cd spike/T-011-goldens && flutter pub deps --json) > build/ci/spike-deps.json
+          python3 tool/ci/license_scan.py \
+            --deps build/ci/spike-deps.json \
+            --package-config spike/T-011-goldens/.dart_tool/package_config.json \
+            --audit docs/research/OPEN_SOURCE_AUDIT.md \
+            --report build/ci/spike-license-report.md
+      - name: Publish the report in the run summary
+        if: always()
+        run: cat build/ci/spike-license-report.md >> "$GITHUB_STEP_SUMMARY" || true
+
+  generate:
+    name: generate goldens ${{ matrix.run }}
+    needs: lockfile
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { run: run1, os: ubuntu-24.04 }
+          - { run: run2, os: ubuntu-24.04 }
+          - { run: run3, os: ubuntu-24.04 }
+          - { run: macos, os: macos-15 }
+    runs-on: ${{ matrix.os }}
+    # macOS is information only (GM-01): its failure never blocks the spike.
+    continue-on-error: ${{ matrix.run == 'macos' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        working-directory: spike/T-011-goldens
+        run: bash ../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: flutter test --update-goldens (CI only, GM-01)
+        working-directory: spike/T-011-goldens
+        run: bash ../../tool/ci/run_logged.sh "generate ${{ matrix.run }}" flutter test --update-goldens --reporter expanded test/golden_toy_test.dart
+      - name: Collect goldens and SHA256SUMS
+        working-directory: spike/T-011-goldens
+        run: |
+          set -euo pipefail
+          out=build/golden-out
+          mkdir -p "$out"
+          cp -R test/goldens "$out/goldens"
+          (cd "$out/goldens" && find . -name '*.png' | LC_ALL=C sort | xargs shasum -a 256) > "$out/SHA256SUMS"
+          count="$(wc -l < "$out/SHA256SUMS" | tr -d ' ')"
+          all="$(shasum -a 256 "$out/SHA256SUMS" | cut -c1-16)"
+          echo "::notice title=Goldens ${{ matrix.run }}::files=$count sums_sha256=$all image=${ImageOS:-?}/${ImageVersion:-?} flutter=$(flutter --version --machine | python3 -c 'import json,sys; print(json.load(sys.stdin)["frameworkVersion"])')"
+          cat "$out/SHA256SUMS"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, node24 (SP-6)
+        with:
+          name: t011-goldens-${{ matrix.run }}
+          path: spike/T-011-goldens/build/golden-out/
+          if-no-files-found: error
+          retention-days: 7
+
+  compare:
+    name: compare (3 runs, compare mode, exactness)
+    needs: generate
+    # Runs when the three Linux runs succeeded, whatever macOS did.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Download the goldens of this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for r in run1 run2 run3; do
+            gh run download "$GITHUB_RUN_ID" -R "$GITHUB_REPOSITORY" -n "t011-goldens-$r" -D "$RUNNER_TEMP/dl/$r"
+          done
+          gh run download "$GITHUB_RUN_ID" -R "$GITHUB_REPOSITORY" -n t011-goldens-macos -D "$RUNNER_TEMP/dl/macos" \
+            || echo "::warning title=macOS goldens::not available (information only)"
+          ls -R "$RUNNER_TEMP/dl" | head -n 40 || true
+      - name: SP-06 - the three Linux runs are byte-identical
+        run: |
+          set -euo pipefail
+          dl="$RUNNER_TEMP/dl"
+          for r in run1 run2 run3; do (cd "$dl/$r/goldens" && sha256sum -c --quiet ../SHA256SUMS); done
+          diffs=0
+          for r in run2 run3; do
+            if ! diff -u "$dl/run1/SHA256SUMS" "$dl/$r/SHA256SUMS"; then diffs=$((diffs + 1)); fi
+          done
+          count="$(wc -l < "$dl/run1/SHA256SUMS" | tr -d ' ')"
+          if [ "$diffs" -ne 0 ]; then
+            echo "::error title=SP-06::the Linux runs differ ($diffs of 2 comparisons)"
+            exit 1
+          fi
+          echo "::notice title=SP-06 three runs::0 diffs; $count goldens identical in run1, run2, run3"
+          echo "SPIKE_EVIDENCE sp06_runs=3 files=$count diffs=0"
+      - name: Information only - macOS hashes against Linux
+        run: |
+          dl="$RUNNER_TEMP/dl"
+          if [ ! -f "$dl/macos/SHA256SUMS" ]; then
+            echo "::notice title=macOS vs Linux::no macOS goldens in this run"
+            exit 0
+          fi
+          same="$(join <(awk '{print $2, $1}' "$dl/run1/SHA256SUMS" | sort) <(awk '{print $2, $1}' "$dl/macos/SHA256SUMS" | sort) | awk '$2 == $3' | wc -l)"
+          total="$(wc -l < "$dl/run1/SHA256SUMS" | tr -d ' ')"
+          echo "::notice title=macOS vs Linux (information only)::$same of $total goldens byte-identical"
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        working-directory: spike/T-011-goldens
+        run: bash ../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: SP-06 - compare mode on a fourth runner against run 1
+        working-directory: spike/T-011-goldens
+        run: |
+          rm -rf test/goldens
+          cp -R "$RUNNER_TEMP/dl/run1/goldens" test/goldens
+          bash ../../tool/ci/run_logged.sh "compare against run1" flutter test --reporter expanded test/golden_toy_test.dart
+      - name: GM-01 - a sub-pixel mutation must fail the comparison
+        working-directory: spike/T-011-goldens
+        run: |
+          set -uo pipefail
+          log="$RUNNER_TEMP/mutate.log"
+          if flutter test --dart-define=TOY_MUTATE=true --reporter expanded test/golden_toy_test.dart > "$log" 2>&1; then
+            cat "$log"
+            echo "::error title=GM-01 exactness::the mutated card matched the goldens"
+            exit 1
+          fi
+          hits="$(grep -c 'Pixel test failed' "$log" || true)"
+          grep -E 'Pixel test failed|tests? failed|Some tests failed' "$log" | head -n 12
+          if [ "$hits" -eq 0 ]; then
+            tail -n 40 "$log"
+            echo "::error title=GM-01 exactness::the mutated run failed, but not on a pixel comparison"
+            exit 1
+          fi
+          detail="$(grep -m1 'Pixel test failed' "$log" | cut -c1-200)"
+          echo "::notice title=GM-01 exactness::mutation caught in $hits golden(s); first: $detail"
+          echo "SPIKE_EVIDENCE gm01_mutation_failed=$hits"
