@@ -28,6 +28,8 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 | Notifications | Platform adapter | OPEN | with `tasks` module |
 | Distribution | GitHub Releases + Pages landing; unsigned builds with honest notes | PROPOSED | `DISTRIBUTION_PLAN.md`, Q-07 |
 | Repo visibility | Public (owner made it public on 2026-10-26) | OWNER-DECIDED | Q-04 (closed) |
+| Product name | **Rewi** (Persian wordmark proposed: «ریوی», awaiting owner confirmation). Repository and code identifiers keep `BlueHesab-Mini` / `bluehesab_mini` until a rename task | OWNER-DECIDED (2026-10-31) | chat; rename task to be planned |
+| Visual identity v2 | Geometric silhouette fox mascot «Rewi» (7 poses), fox-in-sun logo, four themes from the owner's reference photos (Ivory, Plum, Clay, Glow), Alexandria for Persian headings, Vazirmatn for all digits and body, Archivo Expanded / SF / Inter for Latin | PROPOSED (owner picks the theme(s); then ADR-UI-001 and token update) | design canvas «Rewi — هویت و ویژن» |
 | Third-party code | No reuse before audit; GPL/AGPL reference-only | POLICY | `OPEN_SOURCE_AUDIT.md` (H1) |
 | Telemetry | None | POLICY | `PRIVACY.md` |
 
@@ -45,3 +47,4 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 | 2026-10-26 | Q-15: ADR-0009 and ADR-UI-009 accepted, with ADR-0001/0005/0006 in one batch (Lead's recommendation) | chat |
 | 2026-10-26 | Merging is delegated to the Lead/Integrator when the owner is away: merge only with CI green, mergeable, docs-only or reviewed per autonomy level, and a recorded check; independent review of PR #1 waived by the owner (docs pack already audited in DOCS-X1) | chat |
 | 2026-10-31 | Style Guide web demo (tokens slice) may be published on GitHub Pages as a development page (not a release); T-010 written by the Lead, to run after the open PRs #12–#14 | chat |
+| 2026-10-31 | Product name changed to **Rewi** (was BlueHesab / آبی‌حساب). Visual identity v2 proposed on the design canvas; the first token palette (Tailwind-like blue/slate) is rejected; T-010 stays on hold until the owner picks the theme(s) | chat |
