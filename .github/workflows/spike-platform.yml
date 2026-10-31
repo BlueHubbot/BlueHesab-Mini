@@ -1,0 +1,260 @@
+name: Spike T-009 platform
+
+# T-009 (SP-09, SP-10 part, SP-11): sizes of the release builds of the real
+# skeleton app (root lib/, unchanged), Android cold start on an emulator,
+# unsigned macOS DMG (hdiutil, an OS tool) and Windows zip with SHA256SUMS,
+# and a "clean install" on a fresh runner of the same OS that has no Flutter:
+# verify checksums, install, launch, still running after 15 s. No new
+# dependency: only OS tools and the pinned Flutter (tool/ci/install_flutter.sh).
+# The APK carries Flutter's debug signing key, as in ci.yml: never for release.
+# Pins as in ci.yml (SP-6).
+
+on:
+  pull_request:
+    paths:
+      - "spike/T-009-platform/**"
+      - ".github/workflows/spike-platform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-platform-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  android:
+    name: android sizes + cold start (emulator)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0, node24 (SP-6)
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: Build release APKs (universal, then per-ABI split)
+        run: |
+          mkdir -p "$RUNNER_TEMP/apk"
+          bash tool/ci/run_logged.sh "build apk universal" flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk "$RUNNER_TEMP/apk/universal.apk"
+          bash tool/ci/run_logged.sh "build apk split" flutter build apk --release --split-per-abi
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk "$RUNNER_TEMP/apk/arm64-v8a.apk"
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk "$RUNNER_TEMP/apk/armeabi-v7a.apk"
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk "$RUNNER_TEMP/apk/x86_64.apk"
+          ls -l "$RUNNER_TEMP/apk"
+      - name: Sizes (SP-09)
+        run: |
+          python3 -I spike/T-009-platform/tool/sizes.py android \
+            "apk_universal=$RUNNER_TEMP/apk/universal.apk" \
+            "apk_arm64_v8a=$RUNNER_TEMP/apk/arm64-v8a.apk" \
+            "apk_armeabi_v7a=$RUNNER_TEMP/apk/armeabi-v7a.apk" \
+            "apk_x86_64=$RUNNER_TEMP/apk/x86_64.apk"
+      - name: Start an Android emulator (API 35, x86_64, KVM)
+        timeout-minutes: 20
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules >/dev/null
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm || echo "::warning title=KVM::/dev/kvm missing"
+          sdk="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          image="system-images;android-35;google_apis;x86_64"
+          (yes || true) | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
+          bash tool/ci/run_logged.sh "sdkmanager" "$sdk/cmdline-tools/latest/bin/sdkmanager" "emulator" "platform-tools" "$image"
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo no | "$sdk/cmdline-tools/latest/bin/avdmanager" create avd -n spike -k "$image" \
+            -p "$ANDROID_AVD_HOME/spike.avd" --force
+          nohup "$sdk/emulator/emulator" -avd spike -no-window -no-audio -no-boot-anim -no-snapshot \
+            -gpu swiftshader_indirect -no-metrics > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          emulator_pid=$!
+          booted=0
+          for _ in $(seq 1 120); do
+            kill -0 "$emulator_pid" 2>/dev/null || break
+            state="$("$sdk/platform-tools/adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+            if [ "$state" = "1" ]; then booted=1; break; fi
+            sleep 5
+          done
+          if [ "$booted" != 1 ]; then
+            msg="$(tail -n 40 "$RUNNER_TEMP/emulator.log" | cut -c1-200 | sed -e 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')"
+            echo "::error title=Android emulator did not boot::${msg}"
+            exit 1
+          fi
+          echo "::notice title=Android emulator::API $("$sdk/platform-tools/adb" shell getprop ro.build.version.sdk | tr -d '\r'), Android $("$sdk/platform-tools/adb" shell getprop ro.build.version.release | tr -d '\r')"
+      - name: Cold start, 5 runs of am start -W -S (SP-09; emulator, not the reference device)
+        timeout-minutes: 10
+        run: |
+          adb="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platform-tools/adb"
+          "$adb" install -r "$RUNNER_TEMP/apk/universal.apk"
+          # Let the package optimiser settle so run 1 is not an install artefact.
+          sleep 20
+          : > "$RUNNER_TEMP/am.txt"
+          for i in 1 2 3 4 5; do
+            "$adb" shell am start -W -S -n io.github.bluehubbot.bluehesab_mini/.MainActivity \
+              | tr -d '\r' | tee -a "$RUNNER_TEMP/am.txt"
+            sleep 5
+          done
+          python3 -I spike/T-009-platform/tool/cold_start.py "$RUNNER_TEMP/am.txt"
+
+  windows-build:
+    name: windows build + zip
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: Build
+        run: bash tool/ci/run_logged.sh "build windows" flutter build windows --release
+      - name: Package zip with SHA256SUMS (unsigned)
+        run: |
+          out=build/windows/x64/runner/Release
+          mkdir -p dist
+          pwsh -NoProfile -Command "Compress-Archive -Path '$out/*' -DestinationPath 'dist/bluehesab-mini-windows-unsigned.zip'"
+          (cd dist && sha256sum ./*.zip > SHA256SUMS)
+          cat dist/SHA256SUMS
+          echo "::notice title=SHA256SUMS windows::$(tr '\n' ' ' < dist/SHA256SUMS)"
+      - name: Sizes (SP-09)
+        run: |
+          python -I spike/T-009-platform/tool/sizes.py windows \
+            "release_folder=build/windows/x64/runner/Release" \
+            "exe=build/windows/x64/runner/Release/bluehesab_mini.exe" \
+            "zip=dist/bluehesab-mini-windows-unsigned.zip"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, node24 (SP-6)
+        with:
+          name: t009-windows
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  macos-build:
+    name: macos build + dmg
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: Build
+        run: bash tool/ci/run_logged.sh "build macos" flutter build macos --release
+      - name: Package zip and DMG (hdiutil UDZO) with SHA256SUMS (unsigned)
+        run: |
+          app=build/macos/Build/Products/Release/bluehesab_mini.app
+          mkdir -p dist "$RUNNER_TEMP/dmgroot"
+          ditto -c -k --keepParent "$app" dist/bluehesab-mini-macos-unsigned.zip
+          cp -R "$app" "$RUNNER_TEMP/dmgroot/"
+          ln -s /Applications "$RUNNER_TEMP/dmgroot/Applications"
+          bash tool/ci/run_logged.sh "hdiutil create" hdiutil create -volname "BlueHesab Mini" \
+            -srcfolder "$RUNNER_TEMP/dmgroot" -ov -format UDZO dist/bluehesab-mini-macos-unsigned.dmg
+          (cd dist && shasum -a 256 ./*.zip ./*.dmg > SHA256SUMS)
+          cat dist/SHA256SUMS
+          echo "::notice title=SHA256SUMS macos::$(tr '\n' ' ' < dist/SHA256SUMS)"
+      - name: Sizes (SP-09)
+        run: |
+          python3 -I spike/T-009-platform/tool/sizes.py macos \
+            "app=build/macos/Build/Products/Release/bluehesab_mini.app" \
+            "zip=dist/bluehesab-mini-macos-unsigned.zip" \
+            "dmg=dist/bluehesab-mini-macos-unsigned.dmg"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, node24 (SP-6)
+        with:
+          name: t009-macos
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  windows-clean:
+    name: windows clean install + launch
+    needs: windows-build
+    runs-on: windows-2025
+    permissions:
+      contents: read
+      actions: read
+    timeout-minutes: 15
+    steps:
+      # No checkout and no Flutter: only the artifact, as a user would get it.
+      # Fetched with the runner's preinstalled gh CLI (no new action, CB-9).
+      - name: Download the artifact of this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "$GITHUB_RUN_ID" -R "$GITHUB_REPOSITORY" -n t009-windows -D dl && ls -l dl
+      - name: Verify SHA256SUMS
+        run: cd dl && sha256sum -c SHA256SUMS
+      - name: Extract, signature status, launch, still running after 15 s
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $dest = Join-Path $env:RUNNER_TEMP 'BlueHesabMini'
+          Expand-Archive -Path dl/bluehesab-mini-windows-unsigned.zip -DestinationPath $dest
+          $exe = Join-Path $dest 'bluehesab_mini.exe'
+          $sig = Get-AuthenticodeSignature $exe
+          Write-Output "::notice title=Windows Authenticode::status=$($sig.Status) message=$($sig.StatusMessage)"
+          $zone = Get-Item $exe -Stream Zone.Identifier -ErrorAction SilentlyContinue
+          Write-Output "::notice title=Windows Mark-of-the-Web::$(if ($zone) { 'present' } else { 'absent (CI download sets no MOTW; SmartScreen not reproduced)' })"
+          $p = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 15
+          $p.Refresh()
+          if ($p.HasExited) {
+            Write-Output "::error title=Windows launch::exited with code $($p.ExitCode) within 15 s"
+            exit 1
+          }
+          Write-Output "::notice title=Windows launch::running after 15 s (pid $($p.Id), working set $([math]::Round($p.WorkingSet64 / 1MB)) MB)"
+          Write-Output "SPIKE_EVIDENCE windows_clean authenticode=$($sig.Status) running_after_15s=true"
+          Stop-Process -Id $p.Id -Force
+
+  macos-clean:
+    name: macos clean install + launch
+    needs: macos-build
+    runs-on: macos-15
+    permissions:
+      contents: read
+      actions: read
+    timeout-minutes: 15
+    steps:
+      # No checkout and no Flutter: only the artifact, as a user would get it.
+      # Fetched with the runner's preinstalled gh CLI (no new action, CB-9).
+      - name: Download the artifact of this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "$GITHUB_RUN_ID" -R "$GITHUB_REPOSITORY" -n t009-macos -D dl && ls -l dl
+      - name: Verify SHA256SUMS
+        run: cd dl && shasum -a 256 -c SHA256SUMS
+      - name: Mount DMG, copy app out, signature/Gatekeeper status, launch, still running after 15 s
+        run: |
+          set -euo pipefail
+          mnt="$RUNNER_TEMP/mnt"; apps="$RUNNER_TEMP/Applications"
+          mkdir -p "$mnt" "$apps"
+          hdiutil attach -nobrowse -readonly -mountpoint "$mnt" dl/bluehesab-mini-macos-unsigned.dmg
+          ls -la "$mnt"
+          cp -R "$mnt/bluehesab_mini.app" "$apps/"
+          hdiutil detach "$mnt"
+          app="$apps/bluehesab_mini.app"
+          sig="$(codesign -dv "$app" 2>&1 | grep -E '^(Signature|TeamIdentifier|Authority)=' | tr '\n' ' ' || true)"
+          echo "::notice title=macOS codesign::${sig:-no signature lines}"
+          gk="$(spctl -a -vv -t exec "$app" 2>&1 | tr '\n' ' ' || true)"
+          echo "::notice title=macOS Gatekeeper (spctl)::${gk}"
+          q="$(xattr -p com.apple.quarantine "$app" 2>/dev/null || echo 'absent (CI download sets no quarantine; first-launch dialog not reproduced)')"
+          echo "::notice title=macOS quarantine::${q}"
+          "$app/Contents/MacOS/bluehesab_mini" > "$RUNNER_TEMP/app.log" 2>&1 &
+          pid=$!
+          sleep 15
+          if ! kill -0 "$pid" 2>/dev/null; then
+            echo "::error title=macOS launch::exited within 15 s"
+            cat "$RUNNER_TEMP/app.log"
+            exit 1
+          fi
+          echo "::notice title=macOS launch::running after 15 s (pid $pid, rss $(ps -o rss= -p "$pid" | tr -d ' ') KB)"
+          echo "SPIKE_EVIDENCE macos_clean running_after_15s=true"
+          kill "$pid"
