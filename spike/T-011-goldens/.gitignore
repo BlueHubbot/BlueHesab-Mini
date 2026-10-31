@@ -1,0 +1,4 @@
+# Goldens are made only on the CI Linux image and passed between jobs as
+# artifacts (GM-01, T-011); a local run must never leave them in git.
+test/goldens/
+test/failures/

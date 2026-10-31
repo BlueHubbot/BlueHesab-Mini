@@ -1,0 +1,19 @@
+# T-011 spike package (SP-06, GM-01; spike/README.md). Evidence, not product.
+# Dependency rule (CB-9): no dependency outside the Flutter SDK; every
+# transitive package is classified by tool/ci/license_scan.py on every PR.
+name: spike_goldens
+description: T-011 spike, golden stability on the Linux CI image.
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ^3.11.0
+  flutter: 3.47.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
