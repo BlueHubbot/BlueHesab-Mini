@@ -1,0 +1,256 @@
+{
+ "version": 2,
+ "date": "2026-11-01",
+ "source": "ADR-UI-011; design canvas «Rewi — هویت و ویژن»",
+ "brand": {
+  "amber": "#F2A033",
+  "ink": "#0E0B05",
+  "ivory": "#F3EBD6"
+ },
+ "themes": {
+  "ivory": {
+   "name_fa": "عاج",
+   "name_en": "Ivory",
+   "roles": {
+    "bg": "#F3EBD6",
+    "surface": "#FBF6EA",
+    "surface2": "#ECE2CA",
+    "ink": "#0E0B05",
+    "text2": "#5A5547",
+    "line": "#DCD1B6",
+    "accent": "#0E0B05",
+    "onaccent": "#FBF6EA"
+   },
+   "on_bg_text": "#0E0B05",
+   "on_bg_text2": "#5A5547",
+   "mascot": {
+    "fox": "#0E0B05",
+    "eye": "#E39A2E",
+    "tail_tip": "#FBF6EA"
+   },
+   "scene": {
+    "sky0": "#F7F0DF",
+    "sky1": "#EDE2C6",
+    "sun": "#E2D3AE",
+    "hill1": "#D8CAA8",
+    "pine": "#BFAF87",
+    "hill2": "#0E0B05"
+   },
+   "activity": [
+    {
+     "fill": "#DCCEAA",
+     "on": "#0E0B05"
+    },
+    {
+     "fill": "#C2BE92",
+     "on": "#0E0B05"
+    },
+    {
+     "fill": "#0E0B05",
+     "on": "#FBF6EA"
+    },
+    {
+     "fill": "#E39A2E",
+     "on": "#0E0B05"
+    }
+   ]
+  },
+  "plum": {
+   "name_fa": "آلو",
+   "name_en": "Plum",
+   "roles": {
+    "bg": "#140512",
+    "surface": "#21101C",
+    "surface2": "#2E1826",
+    "ink": "#F3E2D5",
+    "text2": "#C2AFA4",
+    "line": "#3C2433",
+    "accent": "#D08A62",
+    "onaccent": "#140512"
+   },
+   "on_bg_text": "#F3E2D5",
+   "on_bg_text2": "#C2AFA4",
+   "mascot": {
+    "fox": "#F3E2D5",
+    "eye": "#E0A33A",
+    "tail_tip": "#F3E2D5"
+   },
+   "scene": {
+    "sky0": "#3D1733",
+    "sky1": "#21101C",
+    "sun": "#C9794F",
+    "hill1": "#2E1826",
+    "pine": "#3E2135",
+    "hill2": "#0B0209"
+   },
+   "activity": [
+    {
+     "fill": "#4A2440",
+     "on": "#F3E2D5"
+    },
+    {
+     "fill": "#6E4530",
+     "on": "#F3E2D5"
+    },
+    {
+     "fill": "#D08A62",
+     "on": "#140512"
+    },
+    {
+     "fill": "#C49A2A",
+     "on": "#140512"
+    }
+   ]
+  },
+  "clay": {
+   "name_fa": "سفال",
+   "name_en": "Clay",
+   "roles": {
+    "bg": "#93594F",
+    "surface": "#F6E8DD",
+    "surface2": "#EBD3C4",
+    "ink": "#2A1511",
+    "text2": "#74463D",
+    "line": "#DEC0B0",
+    "accent": "#B4492F",
+    "onaccent": "#FFF4EC"
+   },
+   "on_bg_text": "#FFF1E8",
+   "on_bg_text2": "#F3D3C6",
+   "mascot": {
+    "fox": "#120806",
+    "eye": "#BADEFC",
+    "tail_tip": "#F6E8DD"
+   },
+   "scene": {
+    "sky0": "#A86B60",
+    "sky1": "#93594F",
+    "sun": "#BADEFC",
+    "hill1": "#C08A7C",
+    "pine": "#B8BC9C",
+    "hill2": "#160A08"
+   },
+   "activity": [
+    {
+     "fill": "#BADEFC",
+     "on": "#2A1511"
+    },
+    {
+     "fill": "#C9CCAE",
+     "on": "#2A1511"
+    },
+    {
+     "fill": "#B4492F",
+     "on": "#FFF4EC"
+    },
+    {
+     "fill": "#2A1511",
+     "on": "#F6E8DD"
+    }
+   ]
+  },
+  "glow": {
+   "name_fa": "شب‌تاب",
+   "name_en": "Glow",
+   "roles": {
+    "bg": "#02080B",
+    "surface": "#071A20",
+    "surface2": "#0B2830",
+    "ink": "#E4F7F6",
+    "text2": "#8DB8BD",
+    "line": "#123840",
+    "accent": "#46D2D7",
+    "onaccent": "#02080B"
+   },
+   "on_bg_text": "#E4F7F6",
+   "on_bg_text2": "#8DB8BD",
+   "mascot": {
+    "fox": "#000000",
+    "eye": "#46D2D7",
+    "tail_tip": "#E4F7F6"
+   },
+   "scene": {
+    "sky0": "#04161C",
+    "sky1": "#02080B",
+    "sun": "#46D2D7",
+    "ring": true,
+    "ringfill": "#03161C",
+    "hill1": "#05191F",
+    "pine": "none",
+    "pine_extra": "stroke=\"#46D2D7\" stroke-width=\"1.2\" opacity=\".75\"",
+    "hill2": "#000000"
+   },
+   "activity": [
+    {
+     "fill": "#0B2830",
+     "on": "#E4F7F6"
+    },
+    {
+     "fill": "#117794",
+     "on": "#E4F7F6"
+    },
+    {
+     "fill": "#46D2D7",
+     "on": "#02080B"
+    },
+    {
+     "fill": "#CCEBEB",
+     "on": "#02080B"
+    }
+   ]
+  }
+ },
+ "auto_schedule_default": [
+  {
+   "from": "06:00",
+   "theme": "ivory"
+  },
+  {
+   "from": "11:00",
+   "theme": "clay"
+  },
+  {
+   "from": "17:00",
+   "theme": "plum"
+  },
+  {
+   "from": "21:00",
+   "theme": "glow"
+  }
+ ],
+ "custom_palette": [
+  "#02080B",
+  "#071A20",
+  "#0B2830",
+  "#0E0B05",
+  "#117794",
+  "#140512",
+  "#21101C",
+  "#2A1511",
+  "#46D2D7",
+  "#4A2440",
+  "#6E4530",
+  "#93594F",
+  "#B4492F",
+  "#BADEFC",
+  "#C2BE92",
+  "#C49A2A",
+  "#C9CCAE",
+  "#CCEBEB",
+  "#D08A62",
+  "#DCCEAA",
+  "#E39A2E",
+  "#E4F7F6",
+  "#F2A033",
+  "#F3E2D5",
+  "#F3EBD6",
+  "#F6E8DD",
+  "#FBF6EA"
+ ],
+ "fonts": {
+  "fa_display": "Alexandria",
+  "fa_text_and_all_digits": "Vazirmatn",
+  "latin_display": "Archivo (wdth 125)",
+  "latin_ui": "SF Pro on Apple platforms, Inter elsewhere"
+ }
+}
