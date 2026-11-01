@@ -29,7 +29,7 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 | Distribution | GitHub Releases + Pages landing; unsigned builds with honest notes | PROPOSED | `DISTRIBUTION_PLAN.md`, Q-07 |
 | Repo visibility | Public (owner made it public on 2026-10-26) | OWNER-DECIDED | Q-04 (closed) |
 | Product name | **Rewi** (Persian: «رِوی», kasra under ر; owner-confirmed 2026-10-31). Repository and code identifiers keep `BlueHesab-Mini` / `bluehesab_mini` until a rename task | OWNER-DECIDED (2026-10-31) | chat; rename task to be planned |
-| Visual identity v2 | Geometric silhouette fox mascot «Rewi» (7 poses), fox-in-sun logo, four themes from the owner's reference photos (Ivory, Plum, Clay, Glow), Alexandria for Persian headings, Vazirmatn for all digits and body, Archivo Expanded / SF / Inter for Latin | PROPOSED (owner picks the theme(s); then ADR-UI-001 and token update) | design canvas «Rewi — هویت و ویژن» |
+| Visual identity v2 | Geometric silhouette fox mascot «Rewi» (7 poses), fox-in-sun logo, four themes from the owner's reference photos (Ivory, Plum, Clay, Glow), Alexandria for Persian headings, Vazirmatn for all digits and body, Archivo Expanded / SF / Inter for Latin | ACCEPTED (ADR-UI-011, 2026-11-01); tokens via T-012, engine via T-013 | `design/brand/`, ADR-UI-011 |
 | Third-party code | No reuse before audit; GPL/AGPL reference-only | POLICY | `OPEN_SOURCE_AUDIT.md` (H1) |
 | Telemetry | None | POLICY | `PRIVACY.md` |
 
@@ -49,3 +49,4 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 | 2026-10-31 | Style Guide web demo (tokens slice) may be published on GitHub Pages as a development page (not a release); T-010 written by the Lead, to run after the open PRs #12–#14 | chat |
 | 2026-10-31 | Product name changed to **Rewi** (was BlueHesab / آبی‌حساب). Visual identity v2 proposed on the design canvas; the first token palette (Tailwind-like blue/slate) is rejected; T-010 stays on hold until the owner picks the theme(s) | chat |
 | 2026-10-31 | Persian spelling of the name: «رِوی» (with kasra under ر) | chat |
+| 2026-11-01 | Themes: all four (Ivory, Plum, Clay, Glow) ship and the user picks; an automatic mode switches by time of day; a custom theme can be built from our curated palette or freely, guarded by contrast checks (ADR-UI-011, accepted) | chat |
