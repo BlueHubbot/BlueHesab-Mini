@@ -93,6 +93,38 @@ ContrastVerdict guardContrast(
   );
 }
 
+/// The shade of [foreground] closest to it that satisfies [accept]
+/// (ADVISOR_REPLY-002 Action 1; used for roles that must pass on several
+/// backgrounds at once, such as `primary-text` and `border-strong`).
+///
+/// Same search as [nearestPassingShade]: [foreground] itself when accepted,
+/// otherwise the first accepted step toward black and toward white, fewer
+/// steps wins; on a tie the darker one. Null when no step is accepted.
+int? nearestShadeWhere(int foreground, bool Function(int rgb) accept) {
+  _checkRgb(foreground);
+  if (accept(foreground)) {
+    return foreground;
+  }
+  int? firstAccepted(int target) {
+    for (int step = 1; step <= 255; step++) {
+      if (accept(_mix(foreground, target, step))) {
+        return step;
+      }
+    }
+    return null;
+  }
+
+  final int? darkSteps = firstAccepted(0);
+  final int? lightSteps = firstAccepted(255);
+  if (darkSteps == null && lightSteps == null) {
+    return null;
+  }
+  if (lightSteps == null || (darkSteps != null && darkSteps <= lightSteps)) {
+    return _mix(foreground, 0, darkSteps!);
+  }
+  return _mix(foreground, 255, lightSteps);
+}
+
 int _mix(int rgb, int target, int step) {
   int channel(int c) => (c + ((target - c) * step / 255)).round();
   return (channel(_red(rgb)) << 16) |
