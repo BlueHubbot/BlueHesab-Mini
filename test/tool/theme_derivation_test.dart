@@ -148,15 +148,17 @@ void main() {
         () {
       expect(nearestShadeWhere(0x123456, (int c) => true), 0x123456);
       expect(nearestShadeWhere(0x123456, (int c) => false), isNull);
-      // Must pass 4.5:1 on white and on light grey: darker, never lighter.
+      // 0xB4492F is 5.34 on white but 3.93 on 0xDDDDDD; it must pass 4.5:1
+      // on both, so the result is a darker shade, never a lighter one.
+      expect(contrastRatioRgb(0xB4492F, 0xDDDDDD), lessThan(4.5));
       final int? s = nearestShadeWhere(
         0xB4492F,
         (int c) =>
             contrastRatioRgb(c, 0xFFFFFF) >= 4.5 &&
-            contrastRatioRgb(c, 0xEEEEEE) >= 4.5,
+            contrastRatioRgb(c, 0xDDDDDD) >= 4.5,
       );
       expect(s, isNotNull);
-      expect(contrastRatioRgb(s!, 0xEEEEEE), greaterThanOrEqualTo(4.5));
+      expect(contrastRatioRgb(s!, 0xDDDDDD), greaterThanOrEqualTo(4.5));
       expect(relativeLuminanceRgb(s), lessThan(relativeLuminanceRgb(0xB4492F)));
     });
 
