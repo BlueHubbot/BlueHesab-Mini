@@ -1,6 +1,6 @@
 # ADVISOR_REPLY-002 — Themes v2: where the 38 missing colour roles come from
 - Replies to: ESC-002 (lives on PR #21, branch `agent/contracts-T-012-tokens-v2`) · Date: 2026-11-01 · By: Advisor (scheduled run)
-- Rule IDs read: ADR-UI-011 §1 and "Consequences", T-012 packet, SE-13, VTG-01…VTG-04 (`11-testing-and-machine-checks.md`, `A-appendix-tokens.md`), AG-05, AG-08, AG-16
+- Rule IDs read: ADR-UI-011 §1 and "Consequences", T-012 packet, the themes-v2 erratum in `docs/design/SPEC_ERRATA.md` (added on PR #21; its ID is not on main yet), VTG-01…VTG-04 (`11-testing-and-machine-checks.md`, `A-appendix-tokens.md`), AG-05, AG-08, AG-16
 
 ## Decision
 **Other = B + A split, as the ESC recommends.**
@@ -18,15 +18,15 @@
 ## Actions
 | # | File(s) | Owner hat |
 |---|---|---|
-| 1 | Write the derivation rule (mix ratios, guard step direction) in `docs/agents/tasks/T-012.md` and `docs/design/SPEC_ERRATA.md` SE-13 (Options → chosen); implement it in `tool/ui_check/**` with tests | Product/Contracts (T-012, PR #21 or a follow-up PR) |
+| 1 | Write the derivation rule (mix ratios, guard step direction) in `docs/agents/tasks/T-012.md` and the themes-v2 erratum in `docs/design/SPEC_ERRATA.md` (Options → chosen); implement it in `tool/ui_check/**` with tests | Product/Contracts (T-012, PR #21 or a follow-up PR) |
 | 2 | Add the Clay text-variant role and the Clay `background` VTG-01 exception (`on_bg_text`) as an erratum entry; amend `A-appendix-tokens.md` A-2-a per AG-02 with reason | Product/Contracts |
 | 3 | Prepare `design/brand/themes-v2.json` → v3 candidate table: 28 status/module values marked PROPOSED, each with its VTG-02/03/04 ratios | Product/Contracts |
 | 4 | Ask the owner to approve or replace the 28 values (one review, shown per theme on the Style Guide canvas or a table) | Lead → owner |
 | 5 | After approval: write four themes into `design/tokens/design_tokens.json`, bump major version and AX-02 checksum, regenerate `design_tokens.g.dart` (MC-02), run full VTG set per theme | Product/Contracts (T-012 criteria 1 and 4) |
 
 ## Follow-ups
-- Until action 4 is done, interim rule SE-13 stays: v1.1 tokens bind code; T-010 and T-013 stay blocked (safe, no screen uses v2).
+- Until action 4 is done, the interim rule of the themes-v2 erratum stays: v1.1 tokens bind code; T-010 and T-013 stay blocked (safe, no screen uses v2).
 - Actions 1–3 do not depend on the owner and may start now (AG-16).
-- Lead sets `Status: CLOSED` on ESC-002 after action 5 lands and SE-13 is closed per its checklist.
+- Lead sets `Status: CLOSED` on ESC-002 after action 5 lands and the themes-v2 erratum is closed per its checklist.
 
 NEEDS_OWNER: yes
