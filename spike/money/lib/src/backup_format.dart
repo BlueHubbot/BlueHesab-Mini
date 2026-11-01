@@ -77,6 +77,35 @@ const Map<String, String> transactionFields = {
   'updated_at': 'text',
 };
 
+/// Transaction columns of schema v1: v2 added `external_ref` (schema.dart).
+final Map<String, String> transactionFieldsV1 = {
+  for (final e in transactionFields.entries)
+    if (e.key != 'external_ref') e.key: e.value,
+};
+
+/// The account columns a backup of [schemaVersion] carries (T-006).
+Map<String, String> accountFieldsFor(int schemaVersion) => switch (
+      schemaVersion) {
+      1 || 2 => accountFields,
+      _ => throw BackupRejectedException(
+          BackupRejection.badField,
+          'no field set for schema v$schemaVersion',
+        ),
+    };
+
+/// The transaction columns a backup of [schemaVersion] carries. A file is
+/// checked against its own version's set, so a v1 file with a v2 field is
+/// rejected (T-006, BACKUP_RESTORE §4 step 2).
+Map<String, String> transactionFieldsFor(int schemaVersion) => switch (
+      schemaVersion) {
+      1 => transactionFieldsV1,
+      2 => transactionFields,
+      _ => throw BackupRejectedException(
+          BackupRejection.badField,
+          'no field set for schema v$schemaVersion',
+        ),
+    };
+
 /// Builds the document and its checksum: sha256 of the canonical body
 /// without the `checksum` field (DATA_MODEL §10).
 Map<String, Object?> buildBackup({
@@ -163,8 +192,9 @@ ValidatedBackup validateBackup(String text, {required int supportedSchema}) {
     );
   }
 
-  final accounts = _rows(decoded, 'accounts', accountFields);
-  final transactions = _rows(decoded, 'transactions', transactionFields);
+  final accounts = _rows(decoded, 'accounts', accountFieldsFor(schema));
+  final transactions =
+      _rows(decoded, 'transactions', transactionFieldsFor(schema));
   final counts = decoded['counts'];
   if (counts is! Map<String, Object?> ||
       counts['accounts'] != accounts.length ||
