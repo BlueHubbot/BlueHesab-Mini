@@ -1,0 +1,21 @@
+# T-007 spike package (SP-04 timezone half, DT-02; spike/README.md).
+# Evidence, not product.
+# Dependency rule (CB-9): timezone has its row in
+# docs/research/OPEN_SOURCE_AUDIT.md (BSD-2-Clause, v0.11.2, PROTOTYPE, T-005).
+# Everything else is the Flutter SDK or a transitive package that
+# tool/ci/license_scan.py classifies on every PR.
+name: spike_timezone
+description: T-007 spike, one central time-zone layer over package:timezone.
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ^3.11.0
+  flutter: 3.47.8
+
+dependencies:
+  timezone: 0.11.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
