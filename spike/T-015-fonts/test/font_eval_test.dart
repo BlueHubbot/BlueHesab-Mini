@@ -75,13 +75,17 @@ void main() {
     final plain = widths(null);
     final tnum = widths(const [FontFeature.tabularFigures()]);
     // Unit digits under each other: two amounts of equal digit count.
-    final a = paint('۱۱۱٬۱۱۱', body.style());
-    final b = paint('۸۸۸٬۸۸۸', body.style());
-    final aligned = (a.width - b.width).abs() < 0.01;
+    bool aligned(List<FontFeature>? features) {
+      final a = paint('۱۱۱٬۱۱۱', body.style(features: features));
+      final b = paint('۸۸۸٬۸۸۸', body.style(features: features));
+      final same = (a.width - b.width).abs() < 0.01;
+      a.dispose();
+      b.dispose();
+      return same;
+    }
     evidence.add('tabular=${plain.length == 1 || tnum.length == 1 ? 'PASS' : 'FAIL'}'
-        ' plain=$plain tnum=$tnum column_aligned=$aligned');
-    a.dispose();
-    b.dispose();
+        ' plain=$plain tnum=$tnum column_aligned_plain=${aligned(null)}'
+        ' column_aligned_tnum=${aligned(const [FontFeature.tabularFigures()])}');
   });
 
   test('mixed: an LTR number inside RTL text keeps left-to-right order', () {

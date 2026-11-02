@@ -29,6 +29,9 @@ REQUIRED = {
 for _d in range(10):
     REQUIRED[f"fa-digit-{_d}"] = 0x06F0 + _d
 FA_DIGITS = [0x06F0 + d for d in range(10)]
+# UI spec §3-1 vertical-metric sample, as code points (nominal forms).
+SPECIMEN = [0x06AF, 0x0686, 0x067E, 0x0698, 0x06CC, 0x0626, 0x0624] + \
+    [0x06F0 + d for d in range(1, 10)] + [0x06F0]
 LATIN_DIGITS = [0x30 + d for d in range(10)]
 
 
@@ -123,6 +126,12 @@ class Font:
         return struct.unpack_from(">H", self.data, base + 4 * idx)[0]
 
     def y_max(self, gid):
+        return self._bbox_y(gid, 8)
+
+    def y_min(self, gid):
+        return self._bbox_y(gid, 4)
+
+    def _bbox_y(self, gid, field):
         if "glyf" not in self.tables:
             return None
         lb = self.off("loca")
@@ -132,7 +141,7 @@ class Font:
             a, b = (2 * x for x in struct.unpack_from(">HH", self.data, lb + 2 * gid))
         if a == b:
             return 0
-        return struct.unpack_from(">h", self.data, self.off("glyf") + a + 8)[0]
+        return struct.unpack_from(">h", self.data, self.off("glyf") + a + field)[0]
 
     def fvar_axes(self):
         if "fvar" not in self.tables:
@@ -205,6 +214,18 @@ def report(path, tokens):
                      "ascent_plus_descent": round(need, 2),
                      "fits": need <= v["line"] + 1e-9})
     out["vertical"] = rows
+    # Ink of the sample glyphs (glyf bbox), to tell "line box larger than the
+    # token line" from "ink would be cut" (TY-04, RKX-04).
+    gids = [f.cmap.get(c) for c in SPECIMEN]
+    if all(gids) and "glyf" in f.tables:
+        top = max(f.y_max(g) for g in gids)
+        bottom = min(f.y_min(g) for g in gids)
+        out["specimen_ink_units"] = [top, bottom]
+        for r in rows:
+            ink = (top - bottom) / f.upem * r["size"]
+            r["ink"] = round(ink, 2)
+            r["ink_fits"] = ink <= r["line"] + 1e-9
+        out["ink_status"] = "PASS" if all(r["ink_fits"] for r in rows) else "FAIL"
     out["vertical_status"] = "PASS" if all(r["fits"] for r in rows) else "FAIL"
     return out
 
@@ -222,23 +243,24 @@ def main():
         return 1
     results = [report(os.path.join(args.fonts, n), tokens) for n in files]
     statics = sorted(r["file"] for r in results if r["file"].startswith("static-"))
-    summary = ["| file | bytes | coverage | weights | tabular | fa/latin digit height | vertical |",
-               "|---|---|---|---|---|---|---|"]
+    summary = ["| file | bytes | coverage | weights | tabular | fa/latin digit height | vertical | ink |",
+               "|---|---|---|---|---|---|---|---|"]
     for r in results:
         h = r.get("digit_ink_height", {})
         summary.append(f"| {r['file']} | {r['bytes']} | {r['coverage']} {r['coverage_missing'] or ''} "
                        f"| {r.get('weights', 'static')} {r.get('axes', {}).get('wght', '')} "
                        f"| {r['tabular']} adv={r.get('fa_digit_advances')} tnum={r['gsub_tnum']} "
-                       f"| {h.get('ratio_fa_over_latin')} | {r['vertical_status']} |")
+                       f"| {h.get('ratio_fa_over_latin')} | {r['vertical_status']} | {r.get('ink_status')} |")
         notice(f"§3-1 {r['file']}",
                f"bytes={r['bytes']} coverage={r['coverage']} missing={r['coverage_missing']} "
                f"weights={r.get('weights', 'static')} wght={r.get('axes', {}).get('wght')} "
                f"tabular={r['tabular']} fa_adv={r.get('fa_digit_advances')} "
                f"latin_adv={r.get('latin_digit_advances')} tnum={r['gsub_tnum']} "
-               f"digit_height={h} metrics={r['metrics']} vertical={r['vertical_status']}")
-        notice(f"vertical {r['file']}",
-               "; ".join(f"{v['token']} {v['ascent_plus_descent']}/{v['line']}"
-                         f"{'' if v['fits'] else ' OVER'}" for v in r["vertical"]))
+               f"digit_height={h} metrics={r['metrics']} vertical={r['vertical_status']} "
+               f"ink={r.get('ink_status')} ink_units={r.get('specimen_ink_units')} | "
+               + "; ".join(f"{v['token']} asc+desc {v['ascent_plus_descent']} ink {v.get('ink')}"
+                           f" / line {v['line']}{'' if v['fits'] else ' OVER'}"
+                           f"{'' if v.get('ink_fits', True) else ' INK-OVER'}" for v in r["vertical"]))
     notice("static weights present", statics or "none")
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as s:
