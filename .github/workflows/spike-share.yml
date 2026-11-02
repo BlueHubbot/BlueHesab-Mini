@@ -187,5 +187,8 @@ jobs:
         run: |
           adb="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platform-tools/adb"
           device="$("$adb" devices | awk 'NR>1 && $2=="device" {print $1; exit}')"
+          # --no-dds: on c3df035 the tool failed once with "Failed to start Dart
+          # Development Service" before the test loaded (tooling, not the test);
+          # the test needs no DevTools features.
           bash ../../tool/ci/run_logged.sh "integration test ${device}" \
-            flutter test integration_test/clipboard_test.dart -d "$device" --reporter expanded
+            flutter test integration_test/clipboard_test.dart -d "$device" --no-dds --reporter expanded

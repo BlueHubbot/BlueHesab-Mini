@@ -17,7 +17,8 @@ Evidence, not product (spike/README.md). Packet: `docs/agents/tasks/T-014.md`. C
 - S5. Permissions of the release APK: none requested by the spike; the manifest merger adds AndroidX's signature-level `<app id>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (internal, no user prompt). No SMS permission.
 - S6. No plugin needed: about 50 lines of Kotlin and a 40-line Dart wrapper. Proposal for the M2 capture task: keep this shape behind a share port (builder-platform digest) instead of a receiver plugin, so no audit row is needed.
 - S7. `flutter create .` in an existing package rewrites `pubspec.lock` and adds `test/widget_test.dart`; the workflow restores tracked files and removes the extra file before checking the tree. `pub get` then printed `Upgrading analysis_options.yaml to exclude build and platform directories.`, so `android/**` is now excluded in the committed file.
-- S8. Release APK size 47.6 MB universal (Flutter engine for three ABIs; T-009 measures the real app).
+- S8. The on-device test run failed once (`c3df035`) with `Failed to start Dart Development Service` before the test loaded; it passed on `876c4da` and runs with `--no-dds` since. Tooling flake to watch in M2 integration jobs, not a share/clipboard result.
+- S9. Release APK size 47.6 MB universal (Flutter engine for three ABIs; T-009 measures the real app).
 
 ## What the real phone must still show (owner, Q-09)
 1. Share from the real SMS app through the system chooser (the CI uses an explicit component; the chooser path is only proven by `query-activities` resolution).
