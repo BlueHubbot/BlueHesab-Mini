@@ -15,6 +15,7 @@
 │   └── workflows/docs-check.yml
 ├── design/
 │   ├── tokens/design_tokens.json       # single source of visual values (checksum AX-02)
+│   ├── brand/                          # Rewi logo, mascot SVGs, themes-v2.json (ADR-UI-011)
 │   └── mvp_manifest.json               # (planned, ADR-UI-009) what exists in the build
 ├── docs/
 │   ├── README.md                       # documentation index

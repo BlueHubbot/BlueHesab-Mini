@@ -22,3 +22,4 @@ Required sections: status/date, context, decision drivers, options, decision, re
 | ADR-UI-001 … 008 | see UI spec section 12 | PROPOSED |
 | ADR-UI-009 | MVP profile (reduced gates, same guarantees) | ACCEPTED (2026-10-26) |
 | ADR-UI-010 | SMS entry in QuickAdd, provenance row, uncertainty marker | planned (before the M2 SMS task; Q-14) |
+| ADR-UI-011 | Rewi identity, four themes, automatic and custom themes | ACCEPTED (2026-11-01) |
