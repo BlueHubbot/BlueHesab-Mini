@@ -1,0 +1,191 @@
+name: Spike T-014 share
+
+# T-014 (SP-07 emulator half, SP-11): the spike package spike/T-014-share
+# receives ACTION_SEND text/plain through its own manifest filter and a small
+# MainActivity method channel (no plugin), on an API 35 emulator: cold start
+# and running app, exact text (ASCII, Persian, 4000 characters), clipboard
+# read only on tap (integration test), no permission in the APK. The Android
+# folder is generated here by `flutter create`; tool/prepare_android.py adds
+# only MainActivity.kt and one intent filter. The APK carries Flutter's debug
+# signing key, as in ci.yml: never for release. Pins as in ci.yml (SP-6).
+
+on:
+  pull_request:
+    paths:
+      - "spike/T-014-share/**"
+      - ".github/workflows/spike-share.yml"
+      - "tool/ci/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-share-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lockfile:
+    name: lockfiles present
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Bootstrap only - resolve and print a missing pubspec.lock
+        if: hashFiles('spike/T-014-share/pubspec.lock') == ''
+        run: |
+          bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+          export PATH="$RUNNER_TEMP/flutter/bin:$PATH"
+          for pkg in spike/T-014-share; do
+            [ -f "$pkg/pubspec.lock" ] && continue
+            (cd "$pkg" && flutter pub get)
+            PKG="$pkg" python3 - <<'PY'
+          import base64, gzip, os
+          pkg = os.environ["PKG"]
+          data = base64.b64encode(gzip.compress(open(f"{pkg}/pubspec.lock", "rb").read(), mtime=0)).decode()
+          parts = [data[i:i + 3000] for i in range(0, len(data), 3000)]
+          for n, part in enumerate(parts, 1):
+              print(f"::notice title={pkg}/pubspec.lock gzip+base64 {n}/{len(parts)}::{part}")
+          PY
+            echo "::error title=Lockfile::$pkg/pubspec.lock is missing; commit the resolved file"
+            missing=1
+          done
+          exit "${missing:-0}"
+
+  analyze:
+    name: analyze + host test + license scan
+    needs: lockfile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        working-directory: spike/T-014-share
+        run: bash ../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: flutter analyze (spike package)
+        working-directory: spike/T-014-share
+        run: bash ../../tool/ci/run_logged.sh "flutter analyze" flutter analyze
+      - name: flutter test (host; channel mocked)
+        working-directory: spike/T-014-share
+        run: bash ../../tool/ci/run_logged.sh "flutter test host" flutter test --reporter expanded
+      - name: Expected vectors (same as the Dart tests)
+        run: python3 -I spike/T-014-share/tool/share_cases.py vectors
+      - name: License scan of the spike lockfile (CB-9, SP-11)
+        run: |
+          mkdir -p build/ci
+          (cd spike/T-014-share && flutter pub deps --json) > build/ci/spike-deps.json
+          python3 tool/ci/license_scan.py \
+            --deps build/ci/spike-deps.json \
+            --package-config spike/T-014-share/.dart_tool/package_config.json \
+            --audit docs/research/OPEN_SOURCE_AUDIT.md \
+            --report build/ci/spike-license-report.md
+      - name: Publish the report in the run summary
+        if: always()
+        run: cat build/ci/spike-license-report.md >> "$GITHUB_STEP_SUMMARY" || true
+
+  android:
+    name: android share + clipboard (emulator)
+    needs: lockfile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      PKG: dev.bluehesab.spike.spike_share
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0, node24 (SP-6)
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Generate the Android folder and add the share glue
+        working-directory: spike/T-014-share
+        run: |
+          bash ../../tool/ci/run_logged.sh "flutter create" flutter create --no-pub --platforms=android \
+            --org dev.bluehesab.spike --project-name spike_share .
+          # Keep only the generated android/ folder (git-ignored): restore any
+          # tracked file and drop other new files flutter create wrote.
+          changed="$(git status --porcelain -- . | tr '\n' ' ')"
+          echo "::notice title=flutter create touched::${changed:-nothing outside android/}"
+          git checkout -- .
+          git ls-files --others --exclude-standard -- . | while read -r f; do rm -f "$f"; done
+          python3 -I tool/prepare_android.py
+          git diff --stat -- . && test -z "$(git status --porcelain -- .)"
+      - name: Resolve packages from the committed lockfile
+        working-directory: spike/T-014-share
+        run: bash ../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: Build release APK
+        working-directory: spike/T-014-share
+        run: bash ../../tool/ci/run_logged.sh "build apk" flutter build apk --release
+      - name: Permissions in the APK (no SMS permission; builder-platform digest)
+        working-directory: spike/T-014-share
+        run: |
+          sdk="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          aapt2="$(ls -d "$sdk"/build-tools/* | sort -V | tail -n 1)/aapt2"
+          "$aapt2" dump permissions build/app/outputs/flutter-apk/app-release.apk | tee "$RUNNER_TEMP/perms.txt"
+          echo "::notice title=APK permissions::$(grep -i 'permission' "$RUNNER_TEMP/perms.txt" | tr '\n' ';')"
+          if grep -qi 'SMS' "$RUNNER_TEMP/perms.txt"; then
+            echo "::error title=APK permissions::SMS permission found"
+            exit 1
+          fi
+      - name: Start an Android emulator (API 35, x86_64, KVM)
+        timeout-minutes: 20
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules >/dev/null
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm || echo "::warning title=KVM::/dev/kvm missing"
+          sdk="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          image="system-images;android-35;google_apis;x86_64"
+          (yes || true) | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
+          bash tool/ci/run_logged.sh "sdkmanager" "$sdk/cmdline-tools/latest/bin/sdkmanager" "emulator" "platform-tools" "$image"
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo no | "$sdk/cmdline-tools/latest/bin/avdmanager" create avd -n spike -k "$image" \
+            -p "$ANDROID_AVD_HOME/spike.avd" --force
+          nohup "$sdk/emulator/emulator" -avd spike -no-window -no-audio -no-boot-anim -no-snapshot \
+            -gpu swiftshader_indirect -no-metrics > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          emulator_pid=$!
+          booted=0
+          for _ in $(seq 1 120); do
+            kill -0 "$emulator_pid" 2>/dev/null || break
+            state="$("$sdk/platform-tools/adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+            if [ "$state" = "1" ]; then booted=1; break; fi
+            sleep 5
+          done
+          if [ "$booted" != 1 ]; then
+            msg="$(tail -n 40 "$RUNNER_TEMP/emulator.log" | cut -c1-200 | sed -e 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')"
+            echo "::error title=Android emulator did not boot::${msg}"
+            exit 1
+          fi
+          echo "::notice title=Android emulator::API $("$sdk/platform-tools/adb" shell getprop ro.build.version.sdk | tr -d '\r'), Android $("$sdk/platform-tools/adb" shell getprop ro.build.version.release | tr -d '\r')"
+      - name: Install; implicit resolution of ACTION_SEND text/plain
+        working-directory: spike/T-014-share
+        run: |
+          adb="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platform-tools/adb"
+          "$adb" install -r build/app/outputs/flutter-apk/app-release.apk
+          sleep 15
+          "$adb" shell cmd package query-activities --brief -a android.intent.action.SEND -t text/plain \
+            | tr -d '\r' | tee "$RUNNER_TEMP/send.txt"
+          echo "::notice title=SEND text/plain resolves to::$(grep "$PKG" "$RUNNER_TEMP/send.txt" | tr '\n' ' ')"
+          grep -q "$PKG" "$RUNNER_TEMP/send.txt"
+      - name: Share cases (cold, running, Persian, 4000 characters)
+        timeout-minutes: 10
+        working-directory: spike/T-014-share
+        run: |
+          adb="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platform-tools/adb"
+          python3 -I tool/share_cases.py run --adb "$adb" --package "$PKG"
+      - name: Clipboard read only on tap (integration test on the emulator)
+        timeout-minutes: 20
+        working-directory: spike/T-014-share
+        run: |
+          adb="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platform-tools/adb"
+          device="$("$adb" devices | awk 'NR>1 && $2=="device" {print $1; exit}')"
+          bash ../../tool/ci/run_logged.sh "integration test ${device}" \
+            flutter test integration_test/clipboard_test.dart -d "$device" --reporter expanded
