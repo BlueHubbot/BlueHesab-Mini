@@ -1,0 +1,7 @@
+{
+  "repo": "rastikerdar/vazirmatn",
+  "tag": "",
+  "asset": "",
+  "sha256": "",
+  "note": "Empty tag/asset/sha256 = discovery mode: tool/fetch_font.py takes the latest release, prints tag, asset and SHA-256, and the CI pin job stays red until they are committed here (T-015 interpretation 1)."
+}

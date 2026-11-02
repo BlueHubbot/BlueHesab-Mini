@@ -1,0 +1,8 @@
+# T-015: the font is fetched at test time and never committed (UI spec §3-1,
+# ADVISOR_REPLY-001). Root .gitignore already ignores build/; these lines make
+# the rule explicit for this package.
+build/
+*.ttf
+*.otf
+*.woff
+*.woff2
