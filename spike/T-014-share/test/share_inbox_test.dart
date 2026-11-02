@@ -1,5 +1,6 @@
 // Host tests for the Dart side of the share glue (T-014, SP-07). The native
 // side runs only on the emulator job (.github/workflows/spike-share.yml).
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spike_share/fingerprint.dart';
