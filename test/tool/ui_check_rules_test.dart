@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../tool/ui_check/src/dart_lexer.dart';
@@ -25,8 +26,8 @@ String _idOf(String rule) => rule.toLowerCase();
 void main() {
   group('lexer', () {
     test('comments and string bodies are blanked, lines kept', () {
-      const String src = "a(); // Color(0xFF000000)\n"
-          "/* outer /* nested */ Curves.x */ b();\n"
+      const String src = 'a(); // Color(0xFF000000)\n'
+          '/* outer /* nested */ Curves.x */ b();\n'
           "final s = 'Colors.red';\n";
       final Lexed lx = Lexed(src);
       expect(lx.code.length, src.length);
@@ -55,7 +56,7 @@ void main() {
     test('raw and triple-quoted strings, exact lines', () {
       const String src = "final a = r'\\u2066';\n"
           "final b = '''\n"
-          "one\n"
+          'one\n'
           "two''';\n"
           'final c = 1;\n';
       final Lexed lx = Lexed(src);
