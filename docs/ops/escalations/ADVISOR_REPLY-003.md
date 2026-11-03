@@ -17,13 +17,13 @@
 ## Actions
 | # | File(s) | Owner hat |
 |---|---|---|
-| 1 | Add erratum SE-13 to `docs/design/SPEC_ERRATA.md` (MC-08 += generated token file; MC-01 += the two named pure-Dart files; interim rule = this reply), then amend the two cells of table 11-2-a per AG-02 with reason "ADVISOR_REPLY-003" | Product/Contracts (Agent 1), on PR #25 or a follow-up PR |
+| 1 | Add a new erratum entry (next free SE number) to `docs/design/SPEC_ERRATA.md` (MC-08 += generated token file; MC-01 += the two named pure-Dart files; interim rule = this reply), then amend the two cells of table 11-2-a per AG-02 with reason "ADVISOR_REPLY-003" | Product/Contracts (Agent 1), on PR #25 or a follow-up PR |
 | 2 | `tool/ui_check/src/rules_stage.dart`: MC-08 skips `design_tokens.g.dart`; MC-01 skips only the two named files and still flags them if they import `package:flutter` or use `Color(`/`Colors.`; add VR-07(a) bad/good samples for both new cells | Product/Contracts (T-016) |
 | 3 | The MC-01 part takes effect only once PR #21 lands those files; until then only the MC-08 part is live | Product/Contracts |
 | 4 | After actions 1–2 are green, wire `ui_check rules` as a blocking CI step (VR-02) before the first M1 UI component task | Builder-Platform (`.github/**`) |
 
 ## Follow-ups
-- Agent 1 approval required by VR-03 is given by this D2 reply plus the SE-13 entry; no owner decision needed.
+- Agent 1 approval required by VR-03 is given by this D2 reply plus that new erratum entry; no owner decision needed.
 - If T-013 later moves the guard into a Flutter-facing file, that file gets no MC-01 exception; it must call the pure functions.
 - Lead sets `Status: CLOSED` on ESC-003 after action 1 is merged.
 
