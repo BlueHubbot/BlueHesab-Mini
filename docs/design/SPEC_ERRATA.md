@@ -1,6 +1,6 @@
 # Spec Errata — known gaps in the UI constitution (v1)
 
-**Status:** 2026-10-26 · **Register owner:** Product/Contracts hat (Agent 1) · **Found by:** the Max consistency audit (`docs/ops/CONSISTENCY_AUDIT.md`) · **Rule IDs:** SE-01…SE-12 (project-owned namespace, not part of the spec).
+**Status:** 2026-10-26 · **Register owner:** Product/Contracts hat (Agent 1) · **Found by:** the Max consistency audit (`docs/ops/CONSISTENCY_AUDIT.md`) · **Rule IDs:** SE-01…SE-12, SE-14 (the number in between is taken by PR #21) (project-owned namespace, not part of the spec).
 
 ## خلاصه‌ی فارسی
 - در بازبینی نهایی، **۱۲ مورد** در متن قانون اساسی UI پیدا شد: **۱۰ مورد نیازمند اصلاح یا ثبت** (SE-01…06، 08، 09، 11، 12) و **۲ مورد اطلاعاتی** (SE-07، SE-10). هیچ‌کدام مانع شروع spike نیست؛ سه مورد با اهمیت متوسط (SE-04، SE-08، SE-09) و یک مورد کم‌اهمیت که از اولین اجرای برنامه دیده می‌شود (SE-12) پیش از کار QuickAdd/خانه/fixtureها باید بسته شوند.
@@ -28,6 +28,7 @@
 | SE-10 | info | — | 08 · AI-14 ↔ 07-8 · PD-05 | — | INFO |
 | SE-11 | gap | low | 08 · AIX-11 ↔ 06 · QX-16 | before v0.4 | OPEN |
 | SE-12 | gap | low | 01 · VI-15 ↔ 09 · HMX-01 ↔ 05 · DM-01 | before the Home task (M2) | OPEN |
+| SE-14 | gap | low | 11 · table 11-2-a MC-01, MC-08 ↔ A · TK-01, ADR-UI-011 §3 | before `ui_check rules` becomes a blocking CI step (VR-02) | CLOSED (spec amended in PR #25; ESC-003 → ADVISOR_REPLY-003) |
 
 Line numbers are those of the files at the date above; search the quoted text if a file has moved.
 
@@ -93,6 +94,11 @@ Line numbers are those of the files at the date above; search the quoted text if
 - **Evidence:** `01-identity.md:96` (VI-15) and `09-tone-and-copy.md:205` (HMX-01) fix one sentence: «برای دیدن وضعیت امروز، یک بودجه یا یک عادت اضافه کنید.» HM-01 (`05-navigation-home-modules.md:122`) makes the day-ring card fixed, and HM-02 (`05:123`) shows this `EmptyState` whenever no arc exists. Arcs belong to modules (DM-01, `05:151`, lists the DayRing arcs among the things that vanish with a disabled module), and v0.1 builds only `budget` (`MVP_SCOPE.md` U-6, ADR-UI-009 §4). So a first-run user who has no budget limit yet is told to add a habit, a feature that does not exist; and with the budget module switched off the sentence names a disabled module. DM-01 says a disabled module leaves no trace in the interface, but its list of places does not mention empty-state text.
 - **Proposed text:** HMX-01 becomes a family of variants chosen by the enabled arc-providing modules: each module's descriptor supplies its own noun phrase as a catalog key (the budget one is «یک بودجه», the habit one «یک عادت», as in the current sentence) and the sentence lists only the enabled ones, joined with «یا». Add to HM-02: when no arc-providing module is enabled the card is not shown (DM-01); or, if Product/Contracts prefers to keep HM-01's «ثابت», a neutral sentence that names no module. Add empty-state text to the places DM-01 lists.
 - **Interim rule:** v0.1 uses the budget-only variant «برای دیدن وضعیت امروز، یک بودجه اضافه کنید.» (the current sentence without «یا یک عادت») taken from the generated catalog: Builder-UI raises an AGX-01 request and puts no literal in the widget (CM-10). With the budget module off, the day-ring card is omitted (DM-01), so that no sentence names a disabled module.
+
+### SE-14 · MC-08 and MC-01 "allowed in" miss the generated token file and the pure-Dart colour maths
+- **Evidence:** table 11-2-a (`11-testing-and-machine-checks.md`) lists `design_tokens.g.dart` in the "allowed in" cell of MC-01, MC-05 and MC-07, but MC-08 allows `Duration(milliseconds:` only in package `app_motion`; the generated token file (TK-01) emits the §4-2 durations from appendix A as 14 such lines. ADR-UI-011 §3 (accepted) needs a runtime contrast guard on user-picked colours, which works on `0xRRGGBB` integers in `lib/design/tokens/theme_derivation.dart` and `contrast_guard.dart` (T-012, PR #21); MC-01 predates it. Found by T-016 (`ui_check rules`), raised as ESC-003, decided by ADVISOR_REPLY-003 (D2; Agent 1 approval for VR-03 given by that reply plus this entry).
+- **Change made:** MC-08 "allowed in" += the generated token file `design_tokens.g.dart`; `app_motion` stays the only place that builds animations and reads motion for UI (MX-03). MC-01 "allowed in" += exactly two named files, `lib/design/tokens/theme_derivation.dart` and `lib/design/tokens/contrast_guard.dart`, only while they stay pure Dart (no `package:flutter` import, no `Color`/`Colors.`, no widget). Not the whole directory (VR-03: no hidden exemption). `ui_check rules` (`tool/ui_check/src/rules_stage.dart`) implements both cells and still flags the two files if they import Flutter or use `Color(`/`Colors.`.
+- **Interim rule:** none (closed by the same PR that amended the spec).
 
 ## Closing checklist (per erratum)
 1. Request recorded (AGX-01) and answered (AG-16); 2. the spec text amended in a PR that names the erratum ID; 3. `docs_check --strict` and the self-test pass; 4. tokens untouched or their checksum regenerated through an ADR (AX-02); 5. this table row set to `CLOSED` with the PR link; 6. interim rule deleted.

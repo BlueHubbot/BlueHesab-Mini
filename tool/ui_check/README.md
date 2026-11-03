@@ -33,11 +33,11 @@ Only `lib/**.dart` (MC-24). A small lexer (`src/dart_lexer.dart`) blanks comment
 
 | Rule | Pattern (table 11-2-a) | Allowed in (as matched) |
 |---|---|---|
-| MC-01 | `Color(0x`, `Colors.`/`CupertinoColors.`, `Color.fromRGBO/ARGB`, 6/8-digit `0x` numbers, `#RRGGBB(AA)` in strings | `lib/design/tokens/design_tokens.g.dart` |
+| MC-01 | `Color(0x`, `Colors.`/`CupertinoColors.`, `Color.fromRGBO/ARGB`, 6/8-digit `0x` numbers, `#RRGGBB(AA)` in strings | `lib/design/tokens/design_tokens.g.dart`; plus `lib/design/tokens/theme_derivation.dart` and `contrast_guard.dart` (SE-14), which still fail on `Color(`, `Colors.`, `Color.from…` and any `package:flutter/` import |
 | MC-03 | `.colorScheme`, `Theme.of(…).…Color` | nothing yet: the ThemeData file is named by ADR-UI-007 |
 | MC-05 | `BoxShadow(`, `Shadow(`, `elevation:`, `BackdropFilter(`, `ImageFilter.blur`, `Linear/Radial/SweepGradient(` | the generated token file |
 | MC-07 | `TextStyle(` with a top-level `fontSize:` | the generated token file (type roles) |
-| MC-08 | `Duration(milliseconds:`, `Curves.`, `AnimationController(`, `AnimatedContainer/Size/Positioned(`, `TweenAnimationBuilder(`, `Hero(`, `Lottie…`, `Rive…`, `package:lottie/` and `package:rive/` imports | any path with a segment `app_motion/` (D0: location not chosen yet) |
+| MC-08 | `Duration(milliseconds:`, `Curves.`, `AnimationController(`, `AnimatedContainer/Size/Positioned(`, `TweenAnimationBuilder(`, `Hero(`, `Lottie…`, `Rive…`, `package:lottie/` and `package:rive/` imports | any path with a segment `app_motion/` (D0: location not chosen yet); plus the generated token file (SE-14) |
 | MC-09 | `Platform.is…`, `Platform.operatingSystem`, `defaultTargetPlatform` | `platform_adapter*.dart` or a `platform_adapter/` folder |
 | MC-10 | `PulseDot(` | `pulse_dot.dart`, `brand_mark.dart`, `quick_add_button.dart`, `assistant_page.dart`, `ai_action_card.dart` |
 | MC-11 | `AppBadge(` | forbidden only in `chip`, `list_row`, `page_header`, `bottom_nav`, `summary_card` (`.dart`, optional `app_` prefix) |
@@ -52,7 +52,7 @@ File names for files that do not exist yet are the narrowest reading of the colu
 
 Not covered (printed as `UNCOVERED`; `--profile=full` fails, MC-23): MC-04, MC-12 (component files and golden review), MC-06, MC-18, MC-19 (lint rows: need `package:analyzer`, no audit row yet), MC-20 (no chart library, ADR-UI-006), MC-21 (copy catalog), MC-22 (Style Guide). MC-02 is in the `tokens` stage.
 
-Known result on `main` (ESC-003): 14 × MC-08 in `design_tokens.g.dart` (motion tokens as `Duration(milliseconds: …)`), so `rules` and the no-argument run exit 1 until ESC-003 is answered; the stage is therefore not yet a blocking CI step. The tool test prints the scan of `lib/` in the CI log.
+Known result on `main`: after SE-14 (ESC-003 → ADVISOR_REPLY-003) amended the MC-01 and MC-08 "allowed in" cells, `rules` is clean on `lib/` (the tool test asserts it, exit 0), so the stage can become a blocking CI step (VR-02; Builder-Platform, ADVISOR_REPLY-003 Action 4).
 
 Fixtures (MC-23): `fixtures/<id>.bad.dart.txt` and `<id>.good.dart.txt` per covered row; the first line `// fixture-path: lib/…` is the path the rule sees (`.txt`, so `flutter analyze` skips them).
 

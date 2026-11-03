@@ -7,7 +7,8 @@
 // bodies blanked), MC-01/08/14/17 also look inside string literals, VR-03
 // looks only inside comments.
 //
-// "Allowed in" (VR-03: the column is the only exemption). Where the column
+// "Allowed in" (VR-03: the column is the only exemption; MC-01 and MC-08
+// cells as amended by SE-14). Where the column
 // names a file that does not exist yet, the narrowest file name it implies is
 // used, one constant per rule; changing one needs Agent 1 approval (AGR-01).
 
@@ -93,6 +94,24 @@ const List<UncoveredRow> uncoveredRows = <UncoveredRow>[
 String _base(String path) => path.substring(path.lastIndexOf('/') + 1);
 
 bool _isGenerated(String path) => path == generatedPath;
+
+/// MC-01 "allowed in" (SE-14, ADVISOR_REPLY-003): the two pure-Dart colour
+/// maths files of the custom theme (ADR-UI-011 §3). Exactly these two paths,
+/// not their directory (VR-03), and only while they stay pure Dart.
+const Set<String> mc01PureDartFiles = <String>{
+  'lib/design/tokens/theme_derivation.dart',
+  'lib/design/tokens/contrast_guard.dart',
+};
+
+/// What still fails MC-01 inside [mc01PureDartFiles]: Flutter colour types.
+final List<RegExp> _mc01PureCode = <RegExp>[
+  _re(r'Color\s*\('),
+  _re(r'(?:Cupertino)?Colors\.'),
+  _re(r'Color\.from(?:RGBO|ARGB)\b'),
+];
+
+/// ... and any Flutter import (the exception holds only for pure Dart).
+final RegExp _flutterImport = RegExp(r'^package:flutter/');
 
 /// MC-08 "package app_motion": any directory segment `app_motion/`.
 final RegExp _appMotion = RegExp(r'(^|/)app_motion/');
@@ -290,8 +309,18 @@ List<RuleHit> checkFile(String path, String source) {
     }
   }
 
-  // MC-01 (TK-02): colours only in the generated token file.
-  if (!_isGenerated(path)) {
+  // MC-01 (TK-02): colours only in the generated token file, plus hex
+  // numbers in the two named pure-Dart files (SE-14).
+  if (mc01PureDartFiles.contains(path)) {
+    codeRule('MC-01', _mc01PureCode,
+        'in a pure-Dart colour file: Flutter colour types are not allowed (SE-14)');
+    for (final StringPart s in lx.strings) {
+      if (_flutterImport.hasMatch(s.text)) {
+        hit('MC-01', s.line,
+            'import `${s.text}` in a pure-Dart colour file (SE-14)');
+      }
+    }
+  } else if (!_isGenerated(path)) {
     codeRule('MC-01', _mc01Code, 'outside $generatedPath (TK-02)');
     for (final StringPart s in lx.strings) {
       final RegExpMatch? m = _mc01String.firstMatch(s.text);
@@ -317,8 +346,9 @@ List<RuleHit> checkFile(String path, String source) {
         'outside the generated type roles (TY-02)');
   }
 
-  // MC-08 (MX-03, CM-08): motion only in package app_motion.
-  if (!_appMotion.hasMatch(path)) {
+  // MC-08 (MX-03, CM-08): motion only in package app_motion and the
+  // generated token file (SE-14: the §4-2 durations come from appendix A).
+  if (!_appMotion.hasMatch(path) && !_isGenerated(path)) {
     codeRule('MC-08', _mc08Code, 'outside package app_motion (MX-03)');
     for (final StringPart s in lx.strings) {
       if (_mc08Import.hasMatch(s.text)) {

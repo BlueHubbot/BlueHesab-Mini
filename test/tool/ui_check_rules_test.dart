@@ -121,6 +121,68 @@ void main() {
       expect(checkFile('lib/design/app_motion_x.dart', src).single.rule, 'MC-08');
     });
 
+    test('MC-08: the generated token file is allowed too (SE-14)', () {
+      const String src = 'const Duration d = Duration(milliseconds: 1);\n';
+      expect(checkFile('lib/design/tokens/design_tokens.g.dart', src), isEmpty);
+      expect(checkFile('lib/design/tokens/motion.dart', src).single.rule, 'MC-08');
+      expect(
+          checkFile('lib/design/tokens/design_tokens.g.dart',
+              'const Curve c = Curves.linear;\n'),
+          isEmpty);
+    });
+
+    test('MC-01: hex numbers allowed only in the two named pure-Dart files (SE-14)',
+        () {
+      // VR-07(a) sound sample: int RGB maths, a colour-shaped hex constant.
+      const String good = 'const int scrim = 0x000000;\n'
+          'int red(int rgb) => (rgb >> 16) & 0xFF;\n'
+          "const String hex = '#1A2B3C';\n";
+      for (final String p in mc01PureDartFiles) {
+        expect(checkFile(p, good), isEmpty, reason: p);
+      }
+      // Same content one directory over or in a sibling file still fails.
+      expect(checkFile('lib/design/tokens/other_maths.dart', good)
+          .map((RuleHit h) => h.rule)
+          .toSet(), <String>{'MC-01'});
+      expect(checkFile('lib/design/theme_derivation.dart', good), isNotEmpty);
+    });
+
+    test('MC-01: the named files fail once they use Flutter (SE-14)', () {
+      // VR-07(a) broken samples: a Flutter import, Color(, Colors., fromARGB.
+      const String path = 'lib/design/tokens/contrast_guard.dart';
+      final Map<String, int> bad = <String, int>{
+        "import 'package:flutter/painting.dart';\n": 1,
+        'final Object c = Color(0xFF000000);\n': 1,
+        'final Object c = Colors.black;\n': 1,
+        'final Object c = Color.fromARGB(255, 0, 0, 0);\n': 1,
+      };
+      bad.forEach((String src, int line) {
+        final List<RuleHit> hits = checkFile(path, src);
+        expect(hits.map((RuleHit h) => h.rule).toSet(), <String>{'MC-01'},
+            reason: src);
+        expect(hits.first.line, line, reason: src);
+      });
+      // A comment that names Color( is not code (lexer).
+      expect(checkFile(path, '// returns a Color( later\nconst int x = 1;\n'),
+          isEmpty);
+    });
+
+    test('MC-01 and MC-08 cells of table 11-2-a name the same files (SE-14)', () {
+      final List<String> rows = File(
+              'docs/design/ui-spec/11-testing-and-machine-checks.md')
+          .readAsLinesSync();
+      final String mc01 = rows.singleWhere((String l) => l.startsWith('| MC-01 '));
+      final String mc08 = rows.singleWhere((String l) => l.startsWith('| MC-08 '));
+      final String allowed01 = mc01.split('|')[4];
+      final String allowed08 = mc08.split('|')[4];
+      for (final String p in mc01PureDartFiles) {
+        expect(allowed01, contains('`$p`'));
+      }
+      expect(allowed01, contains('`design_tokens.g.dart`'));
+      expect(allowed08, contains('`app_motion`'));
+      expect(allowed08, contains('`design_tokens.g.dart`'));
+    });
+
     test('MC-11: AppBadge( fails only in the five named files', () {
       const String src = 'Widget b() => const AppBadge();\n';
       for (final String f in <String>[
@@ -229,7 +291,7 @@ void main() {
     });
   });
 
-  test('scan of the real lib/ (printed for the PR; ESC-003)', () {
+  test('scan of the real lib/ is clean (printed for the PR; SE-14)', () {
     final StringBuffer out = StringBuffer();
     final int code = runCli(<String>['rules'], out, StringBuffer());
     debugPrint('--- dart run tool/ui_check/ui_check.dart rules (exit $code)');
@@ -242,5 +304,9 @@ void main() {
     for (final RuleHit h in r.hits) {
       expect(coveredRules, contains(h.rule));
     }
+    // After SE-14 the generated token file no longer trips MC-08, so the
+    // rules stage is green on lib/ and can become a blocking CI step (VR-02).
+    expect(r.hits, isEmpty, reason: r.report.join('\n'));
+    expect(code, 0);
   });
 }
