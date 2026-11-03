@@ -1,0 +1,4 @@
+// fixture-path: lib/assistant/assistant_page.dart
+Widget dot() => const PulseDot();
+// PulseDotState.idle is not a constructor call.
+const PulseDotState s = PulseDotState.idle;

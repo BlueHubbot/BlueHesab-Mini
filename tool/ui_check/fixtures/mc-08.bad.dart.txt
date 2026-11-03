@@ -1,0 +1,2 @@
+// fixture-path: lib/ui/fade.dart
+const Duration fade = Duration(milliseconds: 200);

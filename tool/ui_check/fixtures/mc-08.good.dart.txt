@@ -1,0 +1,5 @@
+// fixture-path: lib/app_motion/motion_tokens.dart
+import 'package:flutter/animation.dart';
+
+const Duration fade = Duration(milliseconds: 200);
+const Curve curve = Curves.linear;
