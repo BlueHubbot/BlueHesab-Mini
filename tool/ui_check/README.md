@@ -52,7 +52,7 @@ File names for files that do not exist yet are the narrowest reading of the colu
 
 Not covered (printed as `UNCOVERED`; `--profile=full` fails, MC-23): MC-04, MC-12 (component files and golden review), MC-06, MC-18, MC-19 (lint rows: need `package:analyzer`, no audit row yet), MC-20 (no chart library, ADR-UI-006), MC-21 (copy catalog), MC-22 (Style Guide). MC-02 is in the `tokens` stage.
 
-Known result on `main` (ESC-003): 15 × MC-08 in `design_tokens.g.dart` (motion tokens as `Duration(milliseconds: …)`), so `rules` and the no-argument run exit 1 until ESC-003 is answered; the stage is therefore not yet a blocking CI step. The tool test prints the scan of `lib/` in the CI log.
+Known result on `main` (ESC-003): 14 × MC-08 in `design_tokens.g.dart` (motion tokens as `Duration(milliseconds: …)`), so `rules` and the no-argument run exit 1 until ESC-003 is answered; the stage is therefore not yet a blocking CI step. The tool test prints the scan of `lib/` in the CI log.
 
 Fixtures (MC-23): `fixtures/<id>.bad.dart.txt` and `<id>.good.dart.txt` per covered row; the first line `// fixture-path: lib/…` is the path the rule sees (`.txt`, so `flutter analyze` skips them).
 
