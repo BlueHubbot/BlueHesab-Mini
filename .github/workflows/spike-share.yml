@@ -191,16 +191,27 @@ jobs:
           # the emulator leaving adb, "No supported devices found" (ff28a4f).
           # Before each attempt the device is recovered and its serial
           # re-resolved; at most 2 attempts; any other failure stops at once.
+          # Each attempt is time-limited so a hang (seen on 348f41d after the
+          # APK install) fails with diagnostics instead of the step timeout.
+          attempt_limit=540
           code=1
           for attempt in 1 2; do
             device="$(bash ../../tool/ci/android_device_ready.sh "$RUNNER_TEMP/emulator.log")"
             set +e
             bash ../../tool/ci/run_logged.sh "integration test ${device} (attempt ${attempt})" \
+              timeout --kill-after=30 "$attempt_limit" \
               flutter test integration_test/clipboard_test.dart -d "$device" --reporter expanded \
               | tee "$RUNNER_TEMP/it.log"
             code=${PIPESTATUS[0]}
             set -e
             [ "$code" -eq 0 ] && break
+            if [ "$code" -eq 124 ] || [ "$code" -eq 137 ]; then
+              echo "::error title=integration test hung::no result within ${attempt_limit}s (attempt ${attempt}); not retried"
+              adb="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platform-tools/adb"
+              "$adb" devices -l || true
+              tail -n 200 "$RUNNER_TEMP/emulator.log" || true
+              break
+            fi
             if grep -q "Failed to start Dart Development Service" "$RUNNER_TEMP/it.log"; then
               cause="DDS did not start"
             elif grep -q "No supported devices found" "$RUNNER_TEMP/it.log"; then

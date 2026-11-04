@@ -4,6 +4,8 @@
 # on ff28a4f the emulator left `adb devices` between two attempts, so the
 # second attempt failed with "No supported devices found".
 #
+# A healthy device (state 'device', boot completed) is not touched.
+#
 # Usage: serial="$(bash tool/ci/android_device_ready.sh [emulator-log])"
 # Env:   DEVICE_WAIT_SECONDS (default 180) limits each of the two waits.
 # Diagnostics go to stderr; on failure it prints `adb devices -l` and the
@@ -27,8 +29,18 @@ fail() {
   exit 1
 }
 
-"$adb" kill-server >/dev/null 2>&1 || true
-"$adb" start-server >&2 || fail "adb start-server failed"
+# Restart adb only when the device is not already usable: on 348f41d an
+# unconditional restart before a healthy first attempt was followed by a hang
+# after the APK install, so a healthy device is left alone.
+state="$("$adb" get-state 2>/dev/null | tr -d '\r' || true)"
+boot="$("$adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+if [ "$state" = "device" ] && [ "$boot" = "1" ]; then
+  echo "android device already usable; adb not restarted" >&2
+else
+  echo "android device not usable (state='${state}', boot='${boot}'); restarting adb" >&2
+  "$adb" kill-server >/dev/null 2>&1 || true
+  "$adb" start-server >&2 || fail "adb start-server failed"
+fi
 
 timeout "$wait_s" "$adb" wait-for-device >&2 \
   || fail "no device within ${wait_s}s (adb wait-for-device)"
