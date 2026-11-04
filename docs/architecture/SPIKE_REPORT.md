@@ -38,7 +38,7 @@ No row is FAIL, so SPIKE_PLAN "Failure handling" (reopen ADR-0002) is not trigge
 6. The device's IANA zone name is not readable without a platform source (timezone T5); no rule ID decides the default. DST gap/overlap behaviour is recorded, not decided (T7).
 7. Goldens only on the Linux CI image; a Mac `--update-goldens` would break CI (goldens G3).
 8. Share intent needs about 50 lines of Kotlin and no plugin (share S6).
-9. The on-device integration step is flaky on the CI emulator (share S8; ESC-004 open, D2).
+9. The on-device integration step is flaky on the CI emulator (share S8; ESC-004 answered (ADVISOR_REPLY-004), fix in follow-up task).
 
 ## 3. Disposition of spike code (`spike/README.md` rule 5)
 Proposed; takes effect only when the owner accepts this report. `KEEP` means "may be moved, with its tests, by a promoting task"; nothing is promoted by this report.
@@ -79,5 +79,5 @@ Font (ADR-UI-003) joins this list after PR #24.
 | Windows installer; signing and notarisation | RV-2, Q-07 (owner) |
 | Device time-zone source; DST gap/overlap rule | open question, before any feature needs local wall times |
 | `busy_timeout` behaviour on Android | promoting storage task |
-| CI emulator flake on the integration step | ESC-004 (D2) |
+| CI emulator flake on the integration step | ESC-004 answered (ADVISOR_REPLY-004), fix in follow-up task |
 | Build needs GitHub (SQLite binary, fonts) | mirror decision only if GitHub becomes unreachable for builds |

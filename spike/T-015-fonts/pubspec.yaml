@@ -1,0 +1,22 @@
+# T-015 spike package (SP-03 font evaluation; spike/README.md).
+# Evidence, not product.
+# Dependency rule (CB-9): Flutter SDK packages only (flutter, flutter_test),
+# covered by the SDK row in docs/research/OPEN_SOURCE_AUDIT.md. The font is
+# not a package and is not bundled: tool/fetch_font.py downloads the pinned
+# Vazirmatn release (OFL-1.1, audit §A) into build/fonts at test time.
+name: spike_fonts
+description: T-015 spike, Vazirmatn against the UI spec §3-1 evaluation table.
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ^3.11.0
+  flutter: 3.47.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

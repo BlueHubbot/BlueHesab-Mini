@@ -1,0 +1,7 @@
+{
+  "repo": "rastikerdar/vazirmatn",
+  "tag": "v33.003",
+  "asset": "vazirmatn-v33.003.zip",
+  "sha256": "0a9afd41967e6f57096a56a181a23f81a2b999b62f1f2a4e4b26736580854fdb",
+  "note": "Pinned from the first CI run of T-015 (discovery mode, trust on first use over HTTPS from the upstream GitHub release; release published 2022-06-22, latest at 2026-11-02). Re-verify against a second source before bundling (ADR-UI-003)."
+}
