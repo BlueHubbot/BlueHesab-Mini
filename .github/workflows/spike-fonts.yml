@@ -1,0 +1,156 @@
+name: Spike T-015 fonts
+
+# T-015 (SP-03, UI spec §3-1): Vazirmatn evaluation. The font is fetched at
+# test time from the pinned upstream release and never committed
+# (ADVISOR_REPLY-001). Jobs: no font file in git, the §3-1 table report,
+# flutter test with the real font on every desktop OS (specimen PNG as an
+# artifact), analyzer + license scan, and the pin check. Pins as in ci.yml
+# (SP-6).
+
+on:
+  pull_request:
+    paths:
+      - "spike/T-015-fonts/**"
+      - ".github/workflows/spike-fonts.yml"
+      - "tool/ci/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-fonts-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  no-font-files:
+    name: no font file in git
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: UI spec §3-1 - no font file before ADR-UI-003
+        run: |
+          tracked="$(git ls-files -- '*.ttf' '*.otf' '*.woff' '*.woff2' '*.TTF' '*.OTF')"
+          if [ -n "$tracked" ]; then
+            echo "::error title=Font file in git::$tracked"
+            exit 1
+          fi
+          echo "::notice title=no font file in git::0 tracked *.ttf/*.otf/*.woff/*.woff2"
+
+  report:
+    name: font report (§3-1 table)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Fetch the pinned font (git-ignored build/fonts)
+        working-directory: spike/T-015-fonts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 -I tool/fetch_font.py --pin tool/font_pin.json --out build/fonts
+      - name: Report coverage, weights, tabular digits, metrics, sizes
+        working-directory: spike/T-015-fonts
+        run: python3 -I tool/font_report.py --fonts build/fonts --tokens ../../design/tokens/design_tokens.json --json build/font-report.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, node24 (SP-6)
+        with:
+          name: t015-font-report
+          path: |
+            spike/T-015-fonts/build/font-report.json
+            spike/T-015-fonts/build/fonts/manifest.json
+          retention-days: 14
+
+  pin:
+    name: font pin committed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Fetch and require a committed pin
+        working-directory: spike/T-015-fonts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 -I tool/fetch_font.py --pin tool/font_pin.json --out build/fonts
+          if [ -f build/fonts/PIN_MISSING ]; then
+            echo "::error title=Font pin::commit these values in spike/T-015-fonts/tool/font_pin.json: $(cat build/fonts/PIN_MISSING)"
+            exit 1
+          fi
+
+  analyze:
+    name: analyze + license scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        working-directory: spike/T-015-fonts
+        run: bash ../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: flutter analyze (spike package)
+        working-directory: spike/T-015-fonts
+        run: bash ../../tool/ci/run_logged.sh "flutter analyze" flutter analyze
+      - name: License scan of the spike lockfile (CB-9, SP-11)
+        run: |
+          mkdir -p build/ci
+          (cd spike/T-015-fonts && flutter pub deps --json) > build/ci/spike-deps.json
+          python3 tool/ci/license_scan.py \
+            --deps build/ci/spike-deps.json \
+            --package-config spike/T-015-fonts/.dart_tool/package_config.json \
+            --audit docs/research/OPEN_SOURCE_AUDIT.md \
+            --report build/ci/spike-license-report.md
+      - name: Publish the report in the run summary
+        if: always()
+        run: cat build/ci/spike-license-report.md >> "$GITHUB_STEP_SUMMARY" || true
+
+  test:
+    name: test ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            py: python3
+          - os: macos-15
+            py: python3
+          - os: windows-2025
+            py: python
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Fetch the pinned font (git-ignored build/fonts)
+        working-directory: spike/T-015-fonts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ${{ matrix.py }} -I tool/fetch_font.py --pin tool/font_pin.json --out build/fonts
+      - name: Resolve packages from the committed lockfile
+        working-directory: spike/T-015-fonts
+        run: bash ../../tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: flutter test (real font loaded)
+        working-directory: spike/T-015-fonts
+        run: bash ../../tool/ci/run_logged.sh "flutter test ${{ matrix.os }}" flutter test --reporter expanded
+      - name: Evidence (per OS)
+        if: always()
+        working-directory: spike/T-015-fonts
+        run: |
+          for f in build/spike-evidence-*.txt; do
+            [ -f "$f" ] || continue
+            while IFS= read -r line; do
+              echo "::notice title=Evidence ${{ matrix.os }}::$line"
+            done < "$f"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, node24 (SP-6)
+        if: always()
+        with:
+          name: t015-specimen-${{ matrix.os }}
+          path: spike/T-015-fonts/build/specimen-*.png
+          if-no-files-found: warn
+          retention-days: 14

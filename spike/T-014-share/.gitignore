@@ -1,0 +1,8 @@
+.dart_tool/
+build/
+# Generated in CI by `flutter create` (tool/prepare_android.py adds the share glue).
+android/
+.metadata
+.flutter-plugins-dependencies
+*.iml
+.idea/
