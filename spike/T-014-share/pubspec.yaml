@@ -1,0 +1,24 @@
+# T-014 spike package (SP-07 emulator half; spike/README.md).
+# Evidence, not product.
+# Dependency rule (CB-9): Flutter SDK packages only (flutter, flutter_test,
+# integration_test), covered by the SDK row in
+# docs/research/OPEN_SOURCE_AUDIT.md. No share or clipboard plugin: the
+# Android glue is native/MainActivity.kt, copied in by tool/prepare_android.py.
+name: spike_share
+description: T-014 spike, Android share intent and clipboard read on tap.
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ^3.11.0
+  flutter: 3.47.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
