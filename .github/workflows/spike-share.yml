@@ -185,14 +185,15 @@ jobs:
         timeout-minutes: 20
         working-directory: spike/T-014-share
         run: |
-          adb="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platform-tools/adb"
-          device="$("$adb" devices | awk 'NR>1 && $2=="device" {print $1; exit}')"
-          # On c3df035 the tool failed once with "Failed to start Dart Development
-          # Service" before the test loaded (tooling, not the test). --no-dds is
-          # not usable: flutter_tools then cannot listen for golden requests
-          # (761113c). Documented mitigation: retry once on that exact message.
+          # T-018 (ADVISOR_REPLY-004 Action 3, ESC-004). Two tooling failure
+          # modes were seen, neither in the test: "Failed to start Dart
+          # Development Service" (c3df035; --no-dds is not usable, 761113c) and
+          # the emulator leaving adb, "No supported devices found" (ff28a4f).
+          # Before each attempt the device is recovered and its serial
+          # re-resolved; at most 2 attempts; any other failure stops at once.
           code=1
           for attempt in 1 2; do
+            device="$(bash ../../tool/ci/android_device_ready.sh "$RUNNER_TEMP/emulator.log")"
             set +e
             bash ../../tool/ci/run_logged.sh "integration test ${device} (attempt ${attempt})" \
               flutter test integration_test/clipboard_test.dart -d "$device" --reporter expanded \
@@ -200,7 +201,14 @@ jobs:
             code=${PIPESTATUS[0]}
             set -e
             [ "$code" -eq 0 ] && break
-            grep -q "Failed to start Dart Development Service" "$RUNNER_TEMP/it.log" || break
-            echo "::warning title=integration test::DDS did not start (attempt ${attempt})"
+            if grep -q "Failed to start Dart Development Service" "$RUNNER_TEMP/it.log"; then
+              cause="DDS did not start"
+            elif grep -q "No supported devices found" "$RUNNER_TEMP/it.log"; then
+              cause="device left adb (No supported devices found)"
+            else
+              break
+            fi
+            [ "$attempt" -lt 2 ] || break
+            echo "::warning title=integration test retry::${cause} (attempt ${attempt}); recovering the device"
           done
           exit "$code"
