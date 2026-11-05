@@ -1,0 +1,2 @@
+// fixture-path: lib/ui/row.dart
+EdgeInsets pad(double s) => EdgeInsets.only(left: s);

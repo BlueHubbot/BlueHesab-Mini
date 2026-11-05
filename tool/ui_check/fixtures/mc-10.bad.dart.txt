@@ -1,0 +1,2 @@
+// fixture-path: lib/home/home_page.dart
+Widget dot() => const PulseDot();

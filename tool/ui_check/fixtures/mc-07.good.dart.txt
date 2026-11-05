@@ -1,0 +1,4 @@
+// fixture-path: lib/ui/title.dart
+// TextStyle(fontSize: 22) is only in the generated roles.
+TextStyle tint(TextStyle base, Color c) => TextStyle(color: c, shadows: shadowsFor(fontSize: 1));
+TextStyle roleTitle(TokenTextRole r) => r.style.copyWith(color: null);

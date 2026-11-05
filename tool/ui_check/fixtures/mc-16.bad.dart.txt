@@ -1,0 +1,2 @@
+// fixture-path: lib/ui/label.dart
+TextDirection guess(String t) => Bidi.detectRtlDirectionality(t) ? TextDirection.rtl : TextDirection.ltr;

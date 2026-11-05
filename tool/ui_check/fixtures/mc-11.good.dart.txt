@@ -1,0 +1,2 @@
+// fixture-path: lib/components/app_header.dart
+Widget badge() => const AppBadge(count: 3);

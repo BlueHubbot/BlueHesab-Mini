@@ -1,0 +1,3 @@
+// fixture-path: lib/design/tokens/design_tokens.g.dart
+const List<BoxShadow> elev1 = <BoxShadow>[BoxShadow()];
+const double elevation = 1;

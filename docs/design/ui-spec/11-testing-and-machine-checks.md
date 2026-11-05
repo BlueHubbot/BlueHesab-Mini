@@ -23,14 +23,14 @@
 
 | شناسه | ممنوع | روش | مجاز در | منبع |
 | --- | --- | --- | --- | --- |
-| MC-01 | `Color(0x`، `Colors.`، `Color.fromRGBO`، `Color.fromARGB` و هر عدد hex رنگ | الگو | `design_tokens.g.dart` | TK-02 |
+| MC-01 | `Color(0x`، `Colors.`، `Color.fromRGBO`، `Color.fromARGB` و هر عدد hex رنگ | الگو | `design_tokens.g.dart`؛ و برای محاسبه‌ی رنگ بدون Flutter فقط `lib/design/tokens/theme_derivation.dart` و `lib/design/tokens/contrast_guard.dart` تا وقتی که `package:flutter`، `Color` یا ویجت ندارند (SE-14) | TK-02 |
 | MC-02 | تفاوت `design_tokens.g.dart` مخزن با خروجی تولید دوباره از `design_tokens.json` | VT-01 | هیچ‌جا | TK-01 |
 | MC-03 | خواندن رنگ جز از `context.colors` و رنگ ماژول جز از `context.accent` داخل AccentScope (مثل `Theme.of(context).colorScheme`) | الگو | فایل ساخت ThemeData (یک فایل؛ نامش در ADR-UI-007 ثبت می‌شود) | TK-03 |
 | MC-04 | نام توکن `accent-…` در کد کامپوننت یا صفحه و `context.accent` در فایل‌های سایدبار و نوار پایین؛ بیش از یک رنگ تأکید در صفحه‌ی یک ماژول (این بخش را بازبینی golden توسط Agent 1 می‌سنجد) | الگو و بازبینی | فایل تولیدشده‌ی توکن و کاتالوگ مقصدها (۵-۱) | TK-06، VI-02 |
 | MC-05 | `BoxShadow(`، `Shadow(`، `elevation:`، `BackdropFilter(`، `ImageFilter.blur`، `LinearGradient(`، `RadialGradient(`، `SweepGradient(` | الگو | فایل تولیدشده‌ی توکن (elev-1 و elev-2) | TK-10، TK-12 |
 | MC-06 | عدد خام در `EdgeInsets`، `EdgeInsetsDirectional`، `SizedBox(width:`، `SizedBox(height:`، `BorderRadius.circular(` و `Radius.circular(` جز `0` | لینت | هیچ‌جا (مقدار میانی فقط با ADR) | TK-13 |
 | MC-07 | `TextStyle(` همراه `fontSize:` | الگو | فایل تولیدشده‌ی نقش‌های تایپی | TY-02 |
-| MC-08 | `Duration(milliseconds:`، `Curves.`، `AnimationController(`، `AnimatedContainer(`، `AnimatedSize(`، `AnimatedPositioned(`، `TweenAnimationBuilder(`، `Hero(`، Lottie و Rive | الگو | پکیج `app_motion` | MX-03، CM-08 |
+| MC-08 | `Duration(milliseconds:`، `Curves.`، `AnimationController(`، `AnimatedContainer(`، `AnimatedSize(`، `AnimatedPositioned(`، `TweenAnimationBuilder(`، `Hero(`، Lottie و Rive | الگو | پکیج `app_motion` و فایل تولیدشده‌ی توکن `design_tokens.g.dart` (SE-14) | MX-03، CM-08 |
 | MC-09 | `Platform.isIOS`، `Platform.isAndroid` و مانند آن برای تغییر چیدمان | الگو | adapter پلتفرم | TK-14 |
 | MC-10 | ساخت `PulseDot(` بیرون از سه جایگاه | الگو | فایل‌های `PulseDot` و `BrandMark`، دکمه‌ی QuickAdd (هاله‌ی موفقیت)، `AssistantPage` و `AIActionCard` | PD-01 |
 | MC-11 | ساخت `AppBadge(` در فایل‌های `chip`، `list_row`، `page_header`، `bottom_nav` و `summary_card` | الگو | هر فایل دیگر | BG-07 |
