@@ -1,0 +1,2 @@
+// fixture-path: lib/ui/label.dart
+const TextAlign align = TextAlign.left;

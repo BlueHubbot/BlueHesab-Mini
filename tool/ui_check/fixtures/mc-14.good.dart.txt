@@ -1,0 +1,2 @@
+// fixture-path: lib/text/bidi_text.dart
+const String isolated = '\u2066abc\u2069';

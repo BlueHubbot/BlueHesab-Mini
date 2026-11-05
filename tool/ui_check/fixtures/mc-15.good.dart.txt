@@ -1,0 +1,3 @@
+// fixture-path: lib/text/bidi_text.dart
+const TextAlign align = TextAlign.left;
+const TextAlign logical = TextAlign.start;

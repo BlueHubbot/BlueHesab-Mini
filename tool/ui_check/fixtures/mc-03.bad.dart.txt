@@ -1,0 +1,2 @@
+// fixture-path: lib/ui/total.dart
+Color pick(BuildContext context) => Theme.of(context).colorScheme.primary;

@@ -1,0 +1,4 @@
+// fixture-path: lib/ui/layout.dart
+import 'dart:io';
+
+bool wide() => Platform.isMacOS;

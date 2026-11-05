@@ -1,0 +1,3 @@
+// fixture-path: lib/ui/label.dart
+// Never Bidi.detectRtlDirectionality(text): direction comes from the locale.
+TextDirection dir(BuildContext context) => Directionality.of(context);

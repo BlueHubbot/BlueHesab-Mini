@@ -1,0 +1,2 @@
+// fixture-path: lib/ui/label.dart
+const String isolated = '\u2066abc\u2069';
