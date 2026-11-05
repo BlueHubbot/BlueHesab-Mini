@@ -1,0 +1,3 @@
+// fixture-path: lib/style_guide/sg_title.dart
+// متن نمونه فقط در Style Guide.
+const String title = 'سلام';

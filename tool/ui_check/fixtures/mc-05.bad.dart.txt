@@ -1,0 +1,2 @@
+// fixture-path: lib/ui/card.dart
+const BoxDecoration d = BoxDecoration(boxShadow: <BoxShadow>[BoxShadow()]);

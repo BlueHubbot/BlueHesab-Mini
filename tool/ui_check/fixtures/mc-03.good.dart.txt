@@ -1,0 +1,4 @@
+// fixture-path: lib/ui/total.dart
+// Not `Theme.of(context).colorScheme`: colours come from context.colors.
+Color pick(BuildContext context) => context.colors.primary;
+const String note = 'Theme.of(context).colorScheme';

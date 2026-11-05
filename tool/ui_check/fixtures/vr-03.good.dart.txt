@@ -1,0 +1,3 @@
+// fixture-path: lib/ui/fade.dart
+// This file follows MC-08 (MX-03): motion comes from app_motion.
+const int frames = 1;

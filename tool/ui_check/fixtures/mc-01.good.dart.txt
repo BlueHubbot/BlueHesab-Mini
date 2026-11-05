@@ -1,0 +1,4 @@
+// fixture-path: lib/design/tokens/design_tokens.g.dart
+// Generated. Colour literals are allowed only here: Color(0xFF1A2B3C).
+const Color primary = Color(0xFF1A2B3C);
+const String hex = '#1A2B3C';

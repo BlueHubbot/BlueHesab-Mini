@@ -1,0 +1,3 @@
+// fixture-path: lib/ui/fade.dart
+// ui_check: ignore MC-08
+const int frames = 1;

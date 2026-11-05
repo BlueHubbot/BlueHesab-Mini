@@ -1,0 +1,3 @@
+// fixture-path: lib/components/numeric_cell.dart
+EdgeInsets pad(double s) => EdgeInsets.only(left: s);
+EdgeInsetsDirectional pad2(double s) => EdgeInsetsDirectional.only(start: s);

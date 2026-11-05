@@ -1,0 +1,4 @@
+// fixture-path: lib/platform/platform_adapter.dart
+import 'dart:io';
+
+bool isDesktop() => Platform.isMacOS || Platform.isWindows;
