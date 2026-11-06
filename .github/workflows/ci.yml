@@ -47,6 +47,28 @@ jobs:
         run: bash tool/ci/run_logged.sh "flutter analyze" flutter analyze
       - name: flutter test
         run: bash tool/ci/run_logged.sh "flutter test" flutter test --reporter expanded
+      # T-019 (ADVISOR_REPLY-003 Action 4): the "static" stage of VR-02 is the
+      # VR-01 command; a finding fails this job and so the PR. No stage
+      # argument = tokens + rules; default profile mvp (ADR-UI-009).
+      - name: ui_check (VR-01, VR-02)
+        run: bash tool/ci/run_logged.sh "ui_check" dart run tool/ui_check/ui_check.dart
+      - name: ui_check negative control (the step can fail)
+        # The MC-01 bad sample goes into a throw-away tree, never the checkout.
+        run: |
+          neg="$RUNNER_TEMP/ui_check_negative"
+          mkdir -p "$neg/lib/ui"
+          tail -n +2 tool/ui_check/fixtures/mc-01.bad.dart.txt > "$neg/lib/ui/brand.dart"
+          set +e
+          dart run tool/ui_check/ui_check.dart rules "--root=$neg" | tee "$RUNNER_TEMP/neg.log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if [ "$code" -ne 1 ] || ! grep -q '^MC-01 lib/ui/brand.dart:' "$RUNNER_TEMP/neg.log"; then
+            echo "::error title=ui_check negative control::expected exit 1 with an MC-01 line, got exit ${code}"
+            exit 1
+          fi
+          git diff --quiet \
+            || { echo "::error title=ui_check negative control::checkout changed"; git --no-pager diff --stat; exit 1; }
+          echo "::notice title=ui_check negative control::MC-01 sample rejected (exit 1) as expected"
 
   license-scan:
     name: license scan

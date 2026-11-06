@@ -35,6 +35,7 @@ Everything about BlueHesab Mini that is not code. Keep this list in sync: `pytho
 | [architecture/AI_TOOL_CONTRACT.md](architecture/AI_TOOL_CONTRACT.md) | AI provider and tool rules (v0.4) |
 | [architecture/PLATFORM_MATRIX.md](architecture/PLATFORM_MATRIX.md) | what each platform has to prove |
 | [architecture/SPIKE_PLAN.md](architecture/SPIKE_PLAN.md) | the M0 technical spike |
+| [architecture/SPIKE_REPORT.md](architecture/SPIKE_REPORT.md) | results of the M0 spike (draft) |
 | [architecture/UI_UX_CONTRACT.md](architecture/UI_UX_CONTRACT.md), [architecture/AGENT_UI_RULES.md](architecture/AGENT_UI_RULES.md) | UI summary and agent rules (the spec is normative) |
 | [DATA_GOVERNANCE.md](DATA_GOVERNANCE.md), [BACKUP_RESTORE.md](BACKUP_RESTORE.md), [SECURITY_PRIVACY_MODEL.md](SECURITY_PRIVACY_MODEL.md) | data policy, backup, security and privacy |
 | [research/OPEN_SOURCE_AUDIT.md](research/OPEN_SOURCE_AUDIT.md), [research/RESEARCH_PROTOCOL.md](research/RESEARCH_PROTOCOL.md) | dependency and license evidence, how research is recorded |
