@@ -28,7 +28,7 @@
 │   ├── product/                        # MVP_SCOPE  MODULE_ROADMAP  DISTRIBUTION_PLAN  POSITIONING  GROWTH_PLAN
 │   ├── architecture/
 │   │   ├── DATA_MODEL.md  MODULE_CONTRACT.md  CAPTURE_PIPELINE.md  AI_TOOL_CONTRACT.md
-│   │   ├── DECISIONS.md  PLATFORM_MATRIX.md  SPIKE_PLAN.md  UI_UX_CONTRACT.md  AGENT_UI_RULES.md
+│   │   ├── DECISIONS.md  PLATFORM_MATRIX.md  SPIKE_PLAN.md  SPIKE_REPORT.md  UI_UX_CONTRACT.md  AGENT_UI_RULES.md
 │   │   └── ADR/                        # ADR-0001…0009, ADR-UI-009 (+ ADR-UI-010 planned), ADR_TEMPLATE, README
 │   ├── design/
 │   │   ├── ui-spec/                    # the UI constitution (README.md + 41 files)
