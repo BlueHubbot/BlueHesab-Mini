@@ -1,0 +1,171 @@
+name: Spike T-021 launch
+
+# T-021 (rest of SP-01): the root app (lib/, unchanged), built exactly as
+# ci.yml builds it, is launched on an iPhone simulator and the web demo is
+# opened in headless Chrome. "Launched" = process alive after 15 s (iOS) and
+# Flutter's <flutter-view> host element present in the loaded page (web).
+# Each job has a negative control that proves its check can fail.
+# No new dependency or action: pinned Flutter (tool/ci/install_flutter.sh),
+# Xcode's simctl, python3 http.server and the runner's preinstalled Chrome.
+# Screenshots show only the empty skeleton page (synthetic, no data).
+# Pins as in ci.yml (SP-6).
+
+on:
+  pull_request:
+    paths:
+      - "spike/T-021-launch/**"
+      - ".github/workflows/spike-launch.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-launch-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ios:
+    name: ios simulator launch
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: Build (same command as ci.yml)
+        run: bash tool/ci/run_logged.sh "build ios simulator" flutter build ios --simulator --debug
+      - name: Boot an iPhone simulator (newest iOS runtime, as spike-money.yml)
+        run: |
+          udid="$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          runtimes = sorted((k for k in devices if ".iOS-" in k),
+                            key=lambda k: [int(x) for x in k.rsplit("iOS-", 1)[1].split("-")])
+          for runtime in reversed(runtimes):
+              for d in devices[runtime]:
+                  if d["name"].startswith("iPhone"):
+                      print(d["udid"]); print(runtime + " " + d["name"], file=sys.stderr); sys.exit(0)
+          sys.exit("no iPhone simulator")
+          ')"
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
+          echo "SIM_UDID=$udid" >> "$GITHUB_ENV"
+      - name: Negative control (launching a bundle that is not installed fails)
+        run: |
+          if xcrun simctl launch "$SIM_UDID" io.github.bluehubbot.notInstalled; then
+            echo "::error title=ios negative control::launch of a missing bundle succeeded"
+            exit 1
+          fi
+          echo "::notice title=ios negative control::launch of a missing bundle failed as expected"
+      - name: Install, launch, still running after 15 s, screenshot
+        run: |
+          set -euo pipefail
+          bundle=io.github.bluehubbot.bluehesabMini
+          app=build/ios/iphonesimulator/Runner.app
+          du -sk "$app"
+          xcrun simctl install "$SIM_UDID" "$app"
+          out="$(xcrun simctl launch "$SIM_UDID" "$bundle")"
+          echo "$out"
+          pid="${out##*: }"
+          sleep 15
+          if ! kill -0 "$pid" 2>/dev/null; then
+            echo "::error title=ios launch::process $pid exited within 15 s"
+            exit 1
+          fi
+          job="$(xcrun simctl spawn "$SIM_UDID" launchctl list | grep "UIKitApplication:${bundle}" || true)"
+          echo "launchctl: ${job}"
+          mkdir -p "$RUNNER_TEMP/shots"
+          xcrun simctl io "$SIM_UDID" screenshot "$RUNNER_TEMP/shots/ios-simulator.png"
+          runtime="$(xcrun simctl list devices -j | python3 -c '
+          import json, sys
+          for r, ds in json.load(sys.stdin)["devices"].items():
+              for d in ds:
+                  if d["udid"] == sys.argv[1]:
+                      print(r.rsplit(".", 1)[1] + " " + d["name"].replace(" ", "_"))
+          ' "$SIM_UDID")"
+          echo "::notice title=ios launch::running after 15 s (pid $pid, rss $(ps -o rss= -p "$pid" | tr -d ' ') KB) on ${runtime}"
+          echo "SPIKE_EVIDENCE ios_sim running_after_15s=true pid=${pid} device=${runtime// /:}"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, node24 (SP-6)
+        if: always()
+        with:
+          name: t021-ios-screenshot
+          path: ${{ runner.temp }}/shots/
+          if-no-files-found: warn
+          retention-days: 30
+
+  web:
+    name: web demo in headless chrome
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: Build (same command as ci.yml)
+        run: bash tool/ci/run_logged.sh "build web" flutter build web --release
+      - name: Serve build/web and an empty control page on localhost
+        run: |
+          mkdir -p "$RUNNER_TEMP/empty"
+          printf '<!doctype html><html><head><title>control</title></head><body></body></html>\n' > "$RUNNER_TEMP/empty/index.html"
+          nohup python3 -I -m http.server 8080 --bind 127.0.0.1 --directory build/web > "$RUNNER_TEMP/http.log" 2>&1 &
+          nohup python3 -I -m http.server 8081 --bind 127.0.0.1 --directory "$RUNNER_TEMP/empty" > "$RUNNER_TEMP/http-empty.log" 2>&1 &
+          for _ in $(seq 1 20); do
+            curl -fsS -o /dev/null http://127.0.0.1:8080/ && curl -fsS -o /dev/null http://127.0.0.1:8081/ && exit 0
+            sleep 1
+          done
+          echo "::error title=web server::did not start"; exit 1
+      - name: Open in headless Chrome (negative control first), DOM, console, screenshot
+        run: |
+          set -euo pipefail
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
+          "$chrome" --version
+          mkdir -p "$RUNNER_TEMP/shots"
+          open_page() { # $1 url, $2 name
+            local profile; profile="$(mktemp -d)"
+            timeout 120 "$chrome" --headless=new --no-sandbox --disable-gpu --no-first-run \
+              --user-data-dir="$profile" --window-size=412,915 \
+              --enable-logging=stderr --v=0 --virtual-time-budget=30000 \
+              --dump-dom "$1" > "$RUNNER_TEMP/$2.dom.html" 2> "$RUNNER_TEMP/$2.chrome.log" || true
+            profile="$(mktemp -d)"
+            timeout 120 "$chrome" --headless=new --no-sandbox --disable-gpu --no-first-run \
+              --user-data-dir="$profile" --window-size=412,915 --virtual-time-budget=30000 \
+              --screenshot="$RUNNER_TEMP/shots/$2.png" "$1" > /dev/null 2>&1 || true
+          }
+          open_page http://127.0.0.1:8081/ control
+          if grep -q '<flutter-view' "$RUNNER_TEMP/control.dom.html"; then
+            echo "::error title=web negative control::<flutter-view found on the empty page"; exit 1
+          fi
+          echo "::notice title=web negative control::no <flutter-view on the empty page, as expected"
+          open_page http://127.0.0.1:8080/ web-demo
+          echo "---- DOM elements (first 40 tags) ----"
+          grep -o '<[a-z][a-z0-9-]*' "$RUNNER_TEMP/web-demo.dom.html" | sort | uniq -c | sort -rn | head -n 40
+          echo "---- console lines ----"
+          grep -E 'CONSOLE|Uncaught' "$RUNNER_TEMP/web-demo.chrome.log" | cut -c1-300 || echo "(none)"
+          echo "---- requests served ----"
+          cut -c1-200 "$RUNNER_TEMP/http.log" | tail -n 40
+          errors="$(grep -cE 'CONSOLE.*(ERROR|error)|Uncaught' "$RUNNER_TEMP/web-demo.chrome.log" || true)"
+          external="$(grep -oE 'https://[a-z0-9.-]+' "$RUNNER_TEMP/web-demo.dom.html" | sort -u | tr '\n' ' ' || true)"
+          echo "::notice title=web external hosts in DOM::${external:-none}"
+          if ! grep -q '<flutter-view' "$RUNNER_TEMP/web-demo.dom.html"; then
+            echo "::error title=web launch::no <flutter-view in the loaded page"
+            tail -n 60 "$RUNNER_TEMP/web-demo.chrome.log" | cut -c1-300
+            exit 1
+          fi
+          echo "::notice title=web launch::<flutter-view present after load; console errors: ${errors}"
+          echo "SPIKE_EVIDENCE web_demo flutter_view=true console_errors=${errors}"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2, node24 (SP-6)
+        if: always()
+        with:
+          name: t021-web-screenshot
+          path: ${{ runner.temp }}/shots/
+          if-no-files-found: warn
+          retention-days: 30
