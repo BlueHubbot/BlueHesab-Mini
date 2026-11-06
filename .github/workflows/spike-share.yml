@@ -182,37 +182,61 @@ jobs:
           adb="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platform-tools/adb"
           python3 -I tool/share_cases.py run --adb "$adb" --package "$PKG"
       - name: Clipboard read only on tap (integration test on the emulator)
-        timeout-minutes: 20
+        # Two attempts of up to 570 s plus two device waits must fit (T-020).
+        timeout-minutes: 30
         working-directory: spike/T-014-share
         run: |
-          # T-018 (ADVISOR_REPLY-004 Action 3, ESC-004). Two tooling failure
-          # modes were seen, neither in the test: "Failed to start Dart
-          # Development Service" (c3df035; --no-dds is not usable, 761113c) and
-          # the emulator leaving adb, "No supported devices found" (ff28a4f).
+          # T-018 (ADVISOR_REPLY-004) and T-020 (ADVISOR_REPLY-005, ESC-005).
+          # Three tooling failure modes were seen, none in the test:
+          # (a) "Failed to start Dart Development Service" (c3df035; --no-dds is
+          #     not usable, 761113c);
+          # (b) the emulator leaving adb, "No supported devices found" (ff28a4f);
+          # (c) a hang after the debug APK install: no VM-service connection,
+          #     device still listed, no test result (348f41d, e8ba72b).
           # Before each attempt the device is recovered and its serial
           # re-resolved; at most 2 attempts; any other failure stops at once.
-          # Each attempt is time-limited so a hang (seen on 348f41d after the
-          # APK install) fails with diagnostics instead of the step timeout.
+          # Each attempt is time-limited; on every hang the step prints
+          # adb devices, the logcat tail and the emulator log tail, and the
+          # retry runs with -v. A second hang fails loudly (CB-1 follow-up).
           attempt_limit=540
+          adb="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platform-tools/adb"
+          hang_diagnostics() {
+            echo "---- adb devices -l ----"
+            "$adb" devices -l || true
+            echo "---- last 300 lines of adb logcat -d ----"
+            timeout 60 "$adb" logcat -d 2>&1 | tail -n 300 || true
+            echo "---- last 200 lines of the emulator log ----"
+            tail -n 200 "$RUNNER_TEMP/emulator.log" || true
+          }
           code=1
+          verbose=""
           for attempt in 1 2; do
             device="$(bash ../../tool/ci/android_device_ready.sh "$RUNNER_TEMP/emulator.log")"
             set +e
             bash ../../tool/ci/run_logged.sh "integration test ${device} (attempt ${attempt})" \
               timeout --kill-after=30 "$attempt_limit" \
-              flutter test integration_test/clipboard_test.dart -d "$device" --reporter expanded \
+              flutter test ${verbose} integration_test/clipboard_test.dart -d "$device" --reporter expanded \
               | tee "$RUNNER_TEMP/it.log"
             code=${PIPESTATUS[0]}
             set -e
             [ "$code" -eq 0 ] && break
             if [ "$code" -eq 124 ] || [ "$code" -eq 137 ]; then
-              echo "::error title=integration test hung::no result within ${attempt_limit}s (attempt ${attempt}); not retried"
-              adb="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platform-tools/adb"
-              "$adb" devices -l || true
-              tail -n 200 "$RUNNER_TEMP/emulator.log" || true
-              break
-            fi
-            if grep -q "Failed to start Dart Development Service" "$RUNNER_TEMP/it.log"; then
+              # A test result is a reporter line past "loading" or a summary.
+              results="$(grep -E "All tests passed!|Some tests failed|[0-9]+:[0-9]+ \+[0-9]+" "$RUNNER_TEMP/it.log" \
+                | grep -vc ": loading " || true)"
+              if grep -q "Installing build/app/outputs/flutter-apk/app-debug.apk" "$RUNNER_TEMP/it.log" \
+                && [ "$results" = "0" ]; then
+                cause="hang after install (no test result within ${attempt_limit}s)"
+              else
+                cause=""
+              fi
+              hang_diagnostics
+              if [ -z "$cause" ] || [ "$attempt" -ge 2 ]; then
+                echo "::error title=integration test hung::no result within ${attempt_limit}s (attempt ${attempt}); not retried"
+                break
+              fi
+              verbose="-v"
+            elif grep -q "Failed to start Dart Development Service" "$RUNNER_TEMP/it.log"; then
               cause="DDS did not start"
             elif grep -q "No supported devices found" "$RUNNER_TEMP/it.log"; then
               cause="device left adb (No supported devices found)"
