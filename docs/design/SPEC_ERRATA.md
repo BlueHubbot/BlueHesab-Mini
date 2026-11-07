@@ -1,6 +1,6 @@
 # Spec Errata — known gaps in the UI constitution (v1)
 
-**Status:** 2026-10-26 · **Register owner:** Product/Contracts hat (Agent 1) · **Found by:** the Max consistency audit (`docs/ops/CONSISTENCY_AUDIT.md`) · **Rule IDs:** SE-01…SE-12, SE-14 (the number in between is taken by PR #21) (project-owned namespace, not part of the spec).
+**Status:** 2026-10-26 · **Register owner:** Product/Contracts hat (Agent 1) · **Found by:** the Max consistency audit (`docs/ops/CONSISTENCY_AUDIT.md`) · **Rule IDs:** SE-01…SE-12, SE-14, SE-15 (the number between SE-12 and SE-14 is taken by PR #21) (project-owned namespace, not part of the spec).
 
 ## خلاصه‌ی فارسی
 - در بازبینی نهایی، **۱۲ مورد** در متن قانون اساسی UI پیدا شد: **۱۰ مورد نیازمند اصلاح یا ثبت** (SE-01…06، 08، 09، 11، 12) و **۲ مورد اطلاعاتی** (SE-07، SE-10). هیچ‌کدام مانع شروع spike نیست؛ سه مورد با اهمیت متوسط (SE-04، SE-08، SE-09) و یک مورد کم‌اهمیت که از اولین اجرای برنامه دیده می‌شود (SE-12) پیش از کار QuickAdd/خانه/fixtureها باید بسته شوند.
@@ -29,6 +29,7 @@
 | SE-11 | gap | low | 08 · AIX-11 ↔ 06 · QX-16 | before v0.4 | OPEN |
 | SE-12 | gap | low | 01 · VI-15 ↔ 09 · HMX-01 ↔ 05 · DM-01 | before the Home task (M2) | OPEN |
 | SE-14 | gap | low | 11 · table 11-2-a MC-01, MC-08 ↔ A · TK-01, ADR-UI-011 §3 | before `ui_check rules` becomes a blocking CI step (VR-02) | CLOSED (spec amended in PR #25; ESC-003 → ADVISOR_REPLY-003) |
+| SE-15 | contradiction | low | 11 · table 11-2-a MC-17 ↔ 10 · DS-02; 10 · DS-06 (wording) | before Persian fixture text goes into `lib/fixtures/` (ADVISOR_REPLY-006 Action 3) | CLOSED (spec amended in the T-023 PR; ESC-006 → ADVISOR_REPLY-006) |
 
 Line numbers are those of the files at the date above; search the quoted text if a file has moved.
 
@@ -99,6 +100,11 @@ Line numbers are those of the files at the date above; search the quoted text if
 - **Evidence:** table 11-2-a (`11-testing-and-machine-checks.md`) lists `design_tokens.g.dart` in the "allowed in" cell of MC-01, MC-05 and MC-07, but MC-08 allows `Duration(milliseconds:` only in package `app_motion`; the generated token file (TK-01) emits the §4-2 durations from appendix A as 14 such lines. ADR-UI-011 §3 (accepted) needs a runtime contrast guard on user-picked colours, which works on `0xRRGGBB` integers in `lib/design/tokens/theme_derivation.dart` and `contrast_guard.dart` (T-012, PR #21); MC-01 predates it. Found by T-016 (`ui_check rules`), raised as ESC-003, decided by ADVISOR_REPLY-003 (D2; Agent 1 approval for VR-03 given by that reply plus this entry).
 - **Change made:** MC-08 "allowed in" += the generated token file `design_tokens.g.dart`; `app_motion` stays the only place that builds animations and reads motion for UI (MX-03). MC-01 "allowed in" += exactly two named files, `lib/design/tokens/theme_derivation.dart` and `lib/design/tokens/contrast_guard.dart`, only while they stay pure Dart (no `package:flutter` import, no `Color`/`Colors.`, no widget). Not the whole directory (VR-03: no hidden exemption). `ui_check rules` (`tool/ui_check/src/rules_stage.dart`) implements both cells and still flags the two files if they import Flutter or use `Color(`/`Colors.`.
 - **Interim rule:** none (closed by the same PR that amended the spec).
+
+### SE-15 · MC-17 forbids the Persian fixture text that DS-02 asks for; DS-06 says the series cross
+- **Evidence:** DS-02 (`10-style-guide-and-fixtures.md`) puts Persian names, titles and labels into `app_fixtures`, but MC-17 (table 11-2-a, `11-testing-and-machine-checks.md`) allows Persian string literals in `lib/**.dart` only in the generated copy catalog and the Style Guide folder, and the `rules` stage is a blocking CI step (T-019). DS-06 says «سری‌ها یکدیگر را قطع می‌کنند», but value(s+1, m) − value(s, m) = 10^14 + Δk × 3 × 10^13 with Δk ≥ −1, so ≥ 7 × 10^13 > 0 for every series and month: the series never cross (their ranges overlap). Found by T-022 (PR #34), raised as ESC-006, decided by ADVISOR_REPLY-006 (D2, Q1 A and Q2 A). Agent 1 approval for the new "allowed in" cell (VR-03): given by ADVISOR_REPLY-006 plus this entry (Product/Contracts hat, T-023).
+- **Change made:** MC-17 "allowed in" += exactly the folder `lib/fixtures/` (fixture text is test data, not copy, CM-10), on the condition that no file in `lib/` outside `lib/fixtures/` and the Style Guide folder imports or exports it. `ui_check rules` (`tool/ui_check/src/rules_stage.dart`) implements the cell anchored at `lib/` (no other `fixtures/` folder is exempt) and the condition as a second MC-17 check on `import`/`export` directives whose URI is `package:bluehesab_mini/fixtures/…` or resolves into `lib/fixtures/`. DS-06 keeps its formula and now says the ranges overlap but the series do not cross. The table 10-2 row W-09 already covers a line that crosses zero (chart 2).
+- **Interim rule:** none (closed by the same PR that amended the spec). Until that PR is on `main`, the ESC-006 default holds: no Persian literal in `lib/fixtures/`.
 
 ## Closing checklist (per erratum)
 1. Request recorded (AGX-01) and answered (AG-16); 2. the spec text amended in a PR that names the erratum ID; 3. `docs_check --strict` and the self-test pass; 4. tokens untouched or their checksum regenerated through an ADR (AX-02); 5. this table row set to `CLOSED` with the PR link; 6. interim rule deleted.
