@@ -233,7 +233,7 @@ void main() {
         'lib/ui/b.dart': "import '../fixtures/app_fixtures.dart' as fx;\n",
         'lib/main.dart': "import 'fixtures/src/fixture_set.dart';\n",
         'lib/app/c.dart': "export 'package:bluehesab_mini/fixtures/app_fixtures.dart'\n"
-            "    show normalSet;\n",
+            '    show normalSet;\n',
         'lib/app/d.dart': 'import\n'
             "    '../fixtures/app_fixtures.dart';\n",
       };
