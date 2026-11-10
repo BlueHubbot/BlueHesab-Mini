@@ -1,6 +1,6 @@
 # ADVISOR_REPLY-007 — `worst` set: exact data for W-09 charts 2–4 and W-12
 - Replies to: ESC-007 (lives on PR #38, branch `agent/tester-T-025-fixture-text`) · Date: 2026-11-10 · By: Advisor (scheduled run)
-- Read (on the PR branch): `10-style-guide-and-fixtures.md` DS-02, DS-04, DS-06, DS-07, tables 10-2-ب (row 1), 10-2-ت (W-01, W-02, W-05, W-09, W-12), 10-3-الف rows `ResponsiveList`, `ChartContainer`; `lib/fixtures/src/worst_set.dart`, `fixture_set.dart` (keys `lunch_with_colleagues`, `food`, `cash`); T-022 non-goals; T-025; ADVISOR_REPLY-006 Action 3; AUTONOMY_AND_ESCALATION §D2. Next free erratum id on `main` and open PRs: SE-16.
+- Read (on the PR branch): `10-style-guide-and-fixtures.md` DS-02, DS-04, DS-06, DS-07, tables 10-2-ب (row 1), 10-2-ت (W-01, W-02, W-05, W-09, W-12), 10-3-الف rows `ResponsiveList`, `ChartContainer`; `lib/fixtures/src/worst_set.dart`, `fixture_set.dart` (keys `lunch_with_colleagues`, `food`, `cash`); T-022 non-goals; T-025; ADVISOR_REPLY-006 Action 3; AUTONOMY_AND_ESCALATION §D2. Highest erratum id on `main` and open PRs: SE-15.
 - Checked chart 2 by script: values (toman) −987654321012345, −808080808101010, −628507295189675, −448933782278339, −269360269367004, −89786756455668, 89786756455667, 269360269367003, 448933782278338, 628507295189674, 808080808101009, 987654321012345. No value is 0; sign changes between m = 6 and 7; m = 12 already equals W-01 exactly; max 15 digits, minor (×10) inside int64 (DS-07).
 
 ## Decision
@@ -20,8 +20,8 @@
 ## Actions
 | # | File(s) | Owner hat |
 |---|---|---|
-| 1 | `docs/design/SPEC_ERRATA.md`: new row SE-16 (or next free) for table 10-2-ت W-09 charts 2–4 and W-12, interim rule = Decision 1–4 of this reply | Product/Contracts |
-| 2 | `docs/design/ui-spec/10-style-guide-and-fixtures.md` table 10-2-ت rows W-09, W-12: exact values, only when SE-16 is closed in a spec PR | Product/Contracts |
+| 1 | `docs/design/SPEC_ERRATA.md`: new SE row (next free number) for table 10-2-ت W-09 charts 2–4 and W-12, interim rule = Decision 1–4 of this reply | Product/Contracts |
+| 2 | `docs/design/ui-spec/10-style-guide-and-fixtures.md` table 10-2-ت rows W-09, W-12: exact values, only when that erratum is closed in a spec PR | Product/Contracts |
 | 3 | After Action 1 is on `main`: follow-up task adds `w09Chart2…4` and `w12Rows` to `lib/fixtures/src/worst_set.dart` with tests (12 chart-2 values above, no zero, sign change at 6→7; 60 zeros; one point; 200 rows, parity of title/amount, dates strictly descending, first 2 Aban, last 19 Farvardin, int64 bound) | Tester / Debugger |
 | 4 | PR #38 (T-025) needs no change and may merge as is: it follows the AG-16 default and leaves these items out | Reviewer / Lead |
 
