@@ -1,8 +1,8 @@
 // The `normal` and `empty` reference sets (DS-02, DS-03; tables 10-2-alef,
 // 10-2-be, 10-2-pe; SE-09 interim rule; T-022).
 //
-// Text: every name, title and label is a stable English key; the Persian
-// text waits for ESC-006 (MC-17). `source` names the spec row of each item.
+// Text: every name, title and label is a stable English key; its Persian
+// text is in `FixtureTextFa` (T-025, SE-15). `source` names the spec row of each item.
 
 import 'fixture_types.dart';
 

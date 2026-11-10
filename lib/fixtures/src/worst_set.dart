@@ -1,8 +1,8 @@
 // The `worst` reference set (DS-04, DS-06; table 10-2-te; T-022).
 //
-// Not here yet (T-022 non-goals): W-05, W-07 and W-10 (Persian text,
-// ESC-006), W-09 charts 2 to 4 (no values given), W-12 (alternation order
-// not given).
+// The Persian text of W-05 and W-07 is in `FixtureTextFa` (T-025).
+// Not here yet: W-09 charts 2 to 4 (no values given) and W-12 (alternation
+// order and dates not given), both ESC-007; W-10 is an assistant card (v0.4).
 
 import 'fixture_types.dart';
 
