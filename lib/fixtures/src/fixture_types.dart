@@ -119,7 +119,7 @@ enum FixtureKind {
   income,
 }
 
-/// One account. Its name is the text item [key] (ESC-006).
+/// One account. Its name is `FixtureTextFa.accounts[key]` (T-025).
 final class FixtureAccount {
   /// Creates an account.
   const FixtureAccount({
