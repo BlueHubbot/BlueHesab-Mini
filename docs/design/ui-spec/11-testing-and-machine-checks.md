@@ -39,7 +39,7 @@
 | MC-14 | FSI، LRI، PDI، LRM و RLM خام (U+2068، U+2066، U+2069، U+200E، U+200F) در رشته‌های کد | الگو | BidiText، formatter مرکزی و `numeric_cell.dart` | NC-11، RT-04 |
 | MC-15 | `TextAlign.left`، `TextAlign.right`، `Alignment.centerLeft` و `Alignment.centerRight` | الگو | BidiText، formatter مرکزی و `numeric_cell.dart` | NC-11 |
 | MC-16 | تشخیص جهت از روی متن: `Bidi.detectRtlDirectionality` و ساختن `TextDirection` از یک رشته | الگو | هیچ‌جا | RT-01 |
-| MC-17 | رشته‌ی فارسی در کد: هر string literal با نویسه‌ای از U+0600 تا U+06FF (ارقام فارسی هم در این بازه‌اند)، U+FB50 تا U+FDFF یا U+FE70 تا U+FEFF | لینت | کاتالوگ تولیدشده‌ی بخش ۹ و پوشه‌ی Style Guide | CM-10، TQ-16، SG-04 |
+| MC-17 | رشته‌ی فارسی در کد: هر string literal با نویسه‌ای از U+0600 تا U+06FF (ارقام فارسی هم در این بازه‌اند)، U+FB50 تا U+FDFF یا U+FE70 تا U+FEFF | لینت | کاتالوگ تولیدشده‌ی بخش ۹ و پوشه‌ی Style Guide؛ و پوشه‌ی `lib/fixtures/` (داده‌ی آزمون، نه متن محصول) به شرطی که هیچ فایلی در `lib/` بیرون از `lib/fixtures/` و پوشه‌ی Style Guide آن را import یا export نکند (SE-15) | CM-10، TQ-16، SG-04 |
 | MC-18 | الحاق مبلغ به رشته: interpolation یا `+` که یکی از عملوندهایش نوع ایستای `MoneyVM` یا مقدار مبلغ باشد (مبلغ همیشه Row شامل عدد، space-1 و واحد است) | لینت | هیچ‌جا | MN-03، CA-01، RT-07 |
 | MC-19 | `double` برای مبلغ (فیلد، پارامتر یا `toDouble()` روی مبلغ) | لینت | هیچ‌جا | MN-01، CA-01 |
 | MC-20 | import کتابخانه‌ی نمودار (ADR-UI-006) | الگو روی import | `chart_adapter_<نام>.dart` | CC-01 |
