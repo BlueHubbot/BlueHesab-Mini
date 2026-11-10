@@ -6,7 +6,7 @@ Synthetic reference data of ui-spec §10-2 (DS-01…DS-07) for tests and the Sty
 - Money is `FixtureAmount`: `BigInt` minor units + currency code (MN-01, DD-02). Tables give toman; storage is rial (`FixtureAmount.toman`, ×10, DD-01). Amounts are written as decimal text, never `int` literals (16–18 digits do not fit a JavaScript number).
 - No `double`: fractions are `FixtureRatio` (numerator/denominator).
 - Dates carry the Jalali and the Gregorian day (`FixtureDate`); 1 Aban 1405 = 2026-10-23.
-- **Text:** every name, title and label is an English key. The Persian text is added after ESC-006 (MC-17 forbids Persian string literals in `lib/` outside the copy catalog and the Style Guide folder). No golden may show fixture text until then.
+- **Text:** every name, title and label is an English key; its Persian text is in `FixtureTextFa` (`src/fixture_text_fa.dart`, T-025), grouped by kind (`accounts`, `transactions`, `categories`, `arcLabels`, `arcValueTexts`, `upcoming`, `market`, `carReminders`, `tasks`, `habits`) plus `ringSemantics`, `monthSpendingComparison`, `w05Title` and the four `w07…` labels. Each value is the spec cell byte for byte; `test/fixtures/fixture_text_fa_test.dart` finds it in §10-2 (or in SE-09 for the Mehr rows). MC-17 allows these literals only in `lib/fixtures/`, and only `lib/fixtures/` and `lib/style_guide/` may import the package (SE-15).
 
 ## `normal` (DS-03) — key → spec row
 | Key | Spec row |
@@ -24,7 +24,7 @@ Synthetic reference data of ui-spec §10-2 (DS-01…DS-07) for tests and the Sty
 | categories `food`, `transport`, `home`, `bills`, `health`, `education`, `clothing`, `entertainment`, `gifts`, `car`, `online_shopping`, `other`; frequent `food`, `transport`, `bills`, `car`, `home`; income `salary` | table 10-2-پ «دسته‌های هزینه» |
 
 ## `worst` (DS-04, table 10-2-ت)
-In: W-01, W-02, W-03, W-04, W-06, W-08 (Latin parts), W-09 chart 1 (DS-06), W-11. Not yet: W-05, W-07, W-10 (Persian text, ESC-006; W-10 is v0.4), W-09 charts 2–4 (no values given), W-12 (alternation order not given). DS-06 is implemented as written; its series do not cross (ESC-006 item 2, recorded by a test).
+In: W-01, W-02, W-03, W-04, W-05 and W-07 (text, `FixtureTextFa`), W-06, W-08 (Latin parts), W-09 chart 1 (DS-06), W-11. Not yet: W-09 charts 2–4 (no values given) and W-12 (alternation order and dates not given), both ESC-007; W-10 (assistant card, v0.4). DS-06 is implemented as written; its series do not cross (SE-15, recorded by a test).
 
 ## `empty`
 No account, transaction or arc (DS-02).

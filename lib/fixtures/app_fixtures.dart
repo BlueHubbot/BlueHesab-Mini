@@ -6,5 +6,6 @@ library;
 
 export 'src/environment.dart';
 export 'src/fixture_set.dart';
+export 'src/fixture_text_fa.dart';
 export 'src/fixture_types.dart';
 export 'src/worst_set.dart';
