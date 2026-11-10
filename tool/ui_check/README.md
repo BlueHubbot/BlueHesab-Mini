@@ -45,7 +45,7 @@ Only `lib/**.dart` (MC-24). A small lexer (`src/dart_lexer.dart`) blanks comment
 | MC-14 | U+2066, U+2068, U+2069, U+200E, U+200F in strings, raw or as `\u` escapes | `bidi_text.dart`, `numeric_cell.dart`, `*formatter.dart` |
 | MC-15 | `TextAlign.left/right`, `Alignment.centerLeft/Right` | same as MC-14 |
 | MC-16 | `Bidi.detectRtlDirectionality`, `estimateDirectionOfText`, `isRtlLanguage`, `TextDirection.values.byName(` | nowhere |
-| MC-17 | U+0600–U+06FF, U+FB50–U+FDFF, U+FE70–U+FEFF in strings, raw or as `\u` escapes | `style_guide/` folders, `copy_catalog.g.dart` |
+| MC-17 | U+0600–U+06FF, U+FB50–U+FDFF, U+FE70–U+FEFF in strings, raw or as `\u` escapes; and (SE-15) an `import`/`export` whose URI reaches `lib/fixtures/` (`package:bluehesab_mini/fixtures/…` or a relative URI) in a file outside `lib/fixtures/` and `lib/style_guide/` | `style_guide/` folders, `copy_catalog.g.dart`, exactly `lib/fixtures/` (SE-15, anchored at `lib/`) |
 | VR-03 | a comment `ui_check: ignore/disable/off/skip/allow/exempt …`, or `ignore/disable/nolint/noqa/exempt … MC-nn/VT-nn` | nowhere |
 
 File names for files that do not exist yet are the narrowest reading of the column; each list is one constant in `src/rules_stage.dart`, changed only with Agent 1 approval (VR-03).

@@ -211,6 +211,68 @@ void main() {
       expect(checkFile('lib/a.dart', r"const String s = '\u06F1';").single.rule,
           'MC-17');
     });
+
+    test('MC-17: Persian text is allowed in lib/fixtures/ only (SE-15)', () {
+      const String src = "const String name = '\u0646\u0642\u062F\u06CC';\n";
+      expect(checkFile('lib/fixtures/src/fixture_set.dart', src), isEmpty);
+      expect(checkFile('lib/fixtures/app_fixtures.dart', src), isEmpty);
+      // No other fixtures/ folder and no look-alike gets the exemption (VR-03).
+      for (final String p in <String>[
+        'lib/features/accounting/fixtures/x.dart',
+        'lib/ui/fixtures/x.dart',
+        'lib/fixtures_extra/x.dart',
+        'lib/ui/a.dart',
+      ]) {
+        expect(checkFile(p, src).single.rule, 'MC-17', reason: p);
+      }
+    });
+
+    test('MC-17 import guard: UI may not import or export the fixtures (SE-15)', () {
+      const Map<String, String> bad = <String, String>{
+        'lib/ui/a.dart': "import 'package:bluehesab_mini/fixtures/app_fixtures.dart';\n",
+        'lib/ui/b.dart': "import '../fixtures/app_fixtures.dart' as fx;\n",
+        'lib/main.dart': "import 'fixtures/src/fixture_set.dart';\n",
+        'lib/app/c.dart': "export 'package:bluehesab_mini/fixtures/app_fixtures.dart'\n"
+            '    show normalSet;\n',
+        'lib/app/d.dart': 'import\n'
+            "    '../fixtures/app_fixtures.dart';\n",
+      };
+      bad.forEach((String path, String src) {
+        final List<RuleHit> hits = checkFile(path, src);
+        expect(hits.map((RuleHit h) => h.rule).toList(), <String>['MC-17'],
+            reason: path);
+        expect(hits.single.message, contains('SE-15'), reason: path);
+      });
+      expect(checkFile('lib/app/d.dart', bad['lib/app/d.dart']!).single.line, 2);
+
+      const String imp =
+          "import 'package:bluehesab_mini/fixtures/app_fixtures.dart';\n";
+      // Allowed importers: the fixtures themselves and the Style Guide.
+      expect(checkFile('lib/fixtures/src/worst_set.dart', imp), isEmpty);
+      expect(checkFile('lib/style_guide/sg_page.dart', imp), isEmpty);
+      expect(checkFile('lib/fixtures/src/a.dart', "import 'fixture_types.dart';\n"),
+          isEmpty);
+      // Not a directive, other packages, other folders: no finding.
+      for (final String src in <String>[
+        "const String p = 'package:bluehesab_mini/fixtures/x.dart';\n",
+        "// import '../fixtures/app_fixtures.dart';\nconst int x = 1;\n",
+        "import 'package:other_pkg/fixtures/x.dart';\n",
+        "import '../features/fixtures_list.dart';\n",
+        "import 'dart:core';\n",
+      ]) {
+        expect(checkFile('lib/ui/a.dart', src), isEmpty, reason: src);
+      }
+    });
+
+    test('MC-17 cell of table 11-2-a names lib/fixtures/ (SE-15)', () {
+      final String row = File(
+              'docs/design/ui-spec/11-testing-and-machine-checks.md')
+          .readAsLinesSync()
+          .singleWhere((String l) => l.startsWith('| MC-17 '));
+      final String allowed = row.split('|')[4];
+      expect(allowed, contains('`lib/fixtures/`'));
+      expect(allowed, contains('SE-15'));
+    });
   });
 
   group('stage', () {

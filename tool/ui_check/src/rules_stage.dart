@@ -140,9 +140,45 @@ bool _isNumericCell(String path) => _base(path) == 'numeric_cell.dart';
 final RegExp _bidiFiles =
     RegExp(r'^(bidi_text|numeric_cell|[a-z0-9_]*formatter)\.dart$');
 
-/// MC-17: the generated copy catalog (section 9) and the Style Guide folder.
-final RegExp _persianAllowed =
-    RegExp(r'(^|/)style_guide/|(^|/)copy_catalog\.g\.dart$');
+/// MC-17: the generated copy catalog (section 9), the Style Guide folder
+/// and, since SE-15 (ADVISOR_REPLY-006), exactly the folder `lib/fixtures/`
+/// (test data, not copy). Anchored at `lib/` so no other `fixtures/` folder
+/// gets an exemption (VR-03).
+final RegExp _persianAllowed = RegExp(
+    r'(^|/)style_guide/|(^|/)copy_catalog\.g\.dart$|^lib/fixtures/');
+
+/// SE-15 import guard: only these folders may import or export the
+/// fixtures, so product UI never reaches fixture text (MC-17, CM-10).
+final RegExp _fixturesImportAllowed = RegExp(r'^lib/(fixtures|style_guide)/');
+
+/// The fixtures folder as a package URI prefix and as a resolved path.
+const String _fixturesPackageUri = 'package:bluehesab_mini/fixtures/';
+const String _fixturesDir = 'lib/fixtures/';
+
+/// An `import` or `export` directive in the masked code, up to its `;`.
+final RegExp _directive = RegExp(r'(?:^|[\n;])[ \t]*(?:import|export)(?![A-Za-z0-9_$])');
+
+/// [uri] of a directive in the file at [path] resolved to a repository path,
+/// or null when it is not a `package:bluehesab_mini/` or relative URI.
+String? _resolveUri(String path, String uri) {
+  if (uri.startsWith('package:bluehesab_mini/')) {
+    return 'lib/${uri.substring('package:bluehesab_mini/'.length)}';
+  }
+  if (uri.contains(':') || uri.startsWith('/')) {
+    return null;
+  }
+  final List<String> parts = path.split('/')..removeLast();
+  for (final String seg in uri.split('/')) {
+    if (seg == '..') {
+      if (parts.isNotEmpty) {
+        parts.removeLast();
+      }
+    } else if (seg != '.' && seg.isNotEmpty) {
+      parts.add(seg);
+    }
+  }
+  return parts.join('/');
+}
 
 // ---------------------------------------------------------------- patterns
 
@@ -410,6 +446,35 @@ List<RuleHit> checkFile(String path, String source) {
       if (raw || escaped) {
         hit('MC-17', s.line,
             'Persian/Arabic text in a string literal outside the copy catalog (CM-10)');
+      }
+    }
+  }
+
+  // MC-17 import guard (SE-15, ADVISOR_REPLY-006 Action 2): outside
+  // lib/fixtures/ and lib/style_guide/ no directive may import or export the
+  // fixtures. Directive URIs are the string parts on the lines from
+  // `import`/`export` to its `;` in the masked code.
+  if (!_fixturesImportAllowed.hasMatch(path)) {
+    final Set<int> directiveLines = <int>{};
+    for (final RegExpMatch m in _directive.allMatches(code)) {
+      final int start = m.end;
+      int end = code.indexOf(';', start);
+      if (end < 0) {
+        end = code.length - 1;
+      }
+      for (int l = lx.lineOf(start); l <= lx.lineOf(end); l++) {
+        directiveLines.add(l);
+      }
+    }
+    for (final StringPart s in lx.strings) {
+      if (!directiveLines.contains(s.line)) {
+        continue;
+      }
+      final String? target = _resolveUri(path, s.text);
+      if (s.text.startsWith(_fixturesPackageUri) ||
+          (target != null && target.startsWith(_fixturesDir))) {
+        hit('MC-17', s.line,
+            'directive `${s.text}` reaches lib/fixtures/ from outside lib/fixtures/ and lib/style_guide/ (SE-15, CM-10)');
       }
     }
   }
