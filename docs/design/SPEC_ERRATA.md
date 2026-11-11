@@ -1,6 +1,6 @@
 # Spec Errata — known gaps in the UI constitution (v1)
 
-**Status:** 2026-10-26 · **Register owner:** Product/Contracts hat (Agent 1) · **Found by:** the Max consistency audit (`docs/ops/CONSISTENCY_AUDIT.md`) · **Rule IDs:** SE-01…SE-12, SE-14, SE-15 (the number between SE-12 and SE-14 is taken by PR #21) (project-owned namespace, not part of the spec).
+**Status:** 2026-10-26 · **Register owner:** Product/Contracts hat (Agent 1) · **Found by:** the Max consistency audit (`docs/ops/CONSISTENCY_AUDIT.md`) · **Rule IDs:** SE-01…SE-12, SE-14, SE-15, SE-16 (the number between SE-12 and SE-14 is taken by PR #21) (project-owned namespace, not part of the spec).
 
 ## خلاصه‌ی فارسی
 - در بازبینی نهایی، **۱۲ مورد** در متن قانون اساسی UI پیدا شد: **۱۰ مورد نیازمند اصلاح یا ثبت** (SE-01…06، 08، 09، 11، 12) و **۲ مورد اطلاعاتی** (SE-07، SE-10). هیچ‌کدام مانع شروع spike نیست؛ سه مورد با اهمیت متوسط (SE-04، SE-08، SE-09) و یک مورد کم‌اهمیت که از اولین اجرای برنامه دیده می‌شود (SE-12) پیش از کار QuickAdd/خانه/fixtureها باید بسته شوند.
@@ -17,11 +17,11 @@
 | ID | Kind | Severity | Where | Needed by | Status |
 |---|---|---|---|---|---|
 | SE-01 | clarify | low | 14 · GTX-03 | before v0.4 (smart input is `NOT_IN_BUILD` in v0.1) | OPEN |
-| SE-02 | clarify | low | 13 · AG-10 ↔ 06 §6-7 | next housekeeping pass | OPEN |
-| SE-03 | clarify | low | 09 intro ↔ 10-1-الف | next housekeeping pass | OPEN |
+| SE-02 | clarify | low | 13 · AG-10 ↔ 06 §6-7 | next housekeeping pass | CLOSED (spec amended in T-024) |
+| SE-03 | clarify | low | 09 intro ↔ 10-1-الف | next housekeeping pass | CLOSED (spec amended in T-024) |
 | SE-04 | gap | **medium** | 05 · HM-04 ↔ 09 · HMX | before the Home task (M2) | OPEN (DD-11 written) |
-| SE-05 | record | low | 13 · AGR-05 ↔ 14 · EOX-01 | before the first `app_fixtures` task (M0) | OPEN |
-| SE-06 | clarify | low | 02 · `border-strong` ↔ 11 · VTG-06 | next housekeeping pass | OPEN |
+| SE-05 | record | low | 13 · AGR-05 ↔ 14 · EOX-01 | before the first `app_fixtures` task (M0) | CLOSED (accepted in T-022, PR #34; spec amended in T-024) |
+| SE-06 | clarify | low | 02 · `border-strong` ↔ 11 · VTG-06 | next housekeeping pass | CLOSED (spec amended in T-024) |
 | SE-07 | info | — | 06 · QE-03 ↔ 10 · DS-02 | — | INFO |
 | SE-08 | contradiction | **medium** | 03 · NM-06 ↔ 06 · AM-01, TQ-13 | before the QuickAdd task (M2) | OPEN |
 | SE-09 | gap | **medium** | 10 · tables 10-2-ب, 10-2-پ | before the first `app_fixtures` task (M0) | CLOSED (fixture in T-022, PR #34; spec amended in T-027) |
@@ -30,6 +30,7 @@
 | SE-12 | gap | low | 01 · VI-15 ↔ 09 · HMX-01 ↔ 05 · DM-01 | before the Home task (M2) | OPEN |
 | SE-14 | gap | low | 11 · table 11-2-a MC-01, MC-08 ↔ A · TK-01, ADR-UI-011 §3 | before `ui_check rules` becomes a blocking CI step (VR-02) | CLOSED (spec amended in PR #25; ESC-003 → ADVISOR_REPLY-003) |
 | SE-15 | contradiction | low | 11 · table 11-2-a MC-17 ↔ 10 · DS-02; 10 · DS-06 (wording) | before Persian fixture text goes into `lib/fixtures/` (ADVISOR_REPLY-006 Action 3) | CLOSED (spec amended in the T-023 PR; ESC-006 → ADVISOR_REPLY-006) |
+| SE-16 | gap | low | 10 · table 10-2-ت W-09 (charts 2–4), W-12 | before the first chart or `ResponsiveList` golden that uses them (M2) | OPEN (interim rule = ADVISOR_REPLY-007) |
 
 Line numbers are those of the files at the date above; search the quoted text if a file has moved.
 
@@ -43,12 +44,14 @@ Line numbers are those of the files at the date above; search the quoted text if
 ### SE-02 · AG-10 points to «the table before HI-01», which has no name
 - **Evidence:** `13-agent-protocol.md:37` (AG-10): the level of each item is one of «سه سطح الگوی اطلاعات (جدول پیش از HI-01)». The three-level table starts at `06-quickadd-and-three-tier.md:277` and has no caption or number; HI-01 itself is at `06:283`.
 - **Proposed text:** give the table the caption «جدول ۶-۷-الف: سه سطح اطلاعات» and change AG-10 to «(جدول ۶-۷-الف)».
-- **Interim rule:** read «the table before HI-01» as the table at `06:277`.
+- **Change made (T-024):** the table got the caption «جدول ۶-۷-الف: سه سطح اطلاعات» (line numbers above are from before this change; HI-01 is now at `06:285`) and AG-10 says «(جدول ۶-۷-الف)».
+- **Interim rule:** none (closed).
 
 ### SE-03 · The copy-catalog intro lists families incompletely; SGX is outside by design but not said
 - **Evidence:** `09-tone-and-copy.md:7` says texts given earlier under their own IDs are repeated in tables 9-4 «تا کاتالوگ کامل باشد» and lists «QX، STX، TOX، OSX، PHX، TGX، PKX، FBX، CCX و AIX». Table 9-4-ث does repeat DMX and HMX, which the list omits. SGX-01…09 (`10-style-guide-and-fixtures.md:16-28`) are not in the catalog; that is intended: SG-04 (`10:12`) exempts the Style Guide folder from the CM-10 check and MC-17 (`11:42`) lists that folder as an allowed place for Persian literals. TN-12 only requires rows for families of section 9.
 - **Proposed text:** in `09:7` extend the list to «… CCX، AIX، DMX و HMX» and add «متن‌های صفحه‌ی Style Guide (SGX، جدول ۱۰-۱-الف) عمداً بیرون کاتالوگ‌اند، چون آن صفحه فقط در ساخت توسعه است (SG-04، MC-17)».
-- **Interim rule:** treat SGX as outside the catalog; DMX and HMX are inside.
+- **Change made (T-024):** `09:7` amended with the proposed text above, word for word.
+- **Interim rule:** none (closed).
 
 ### SE-04 · The Home «compare with last month» line has no basis rule and no copy rows
 - **Evidence:** `05-navigation-home-modules.md:139` (HM-04, widget `monthSpending`): «یک عدد اصلی و یک خط مقایسه («۱۲٪ کمتر از مهر»)». The fixture (`10:73`, table 10-2-پ) says the compared amount is «مقدار هم‌بازه‌ی مهر ۲٬۰۰۰٬۰۰۰ تومان», that is, the **same elapsed period** of the previous month (1 760 000 vs 2 000 000 gives 12 %). No rule states that basis, how the percentage is rounded, or when the line is hidden; `09-tone-and-copy.md` (HMX-01…07) has no row for the «کمتر / بیشتر» sentence with its two parameters. The Reports page (F08, «مقایسه با ماه قبل») needs the same rule.
@@ -59,12 +62,14 @@ Line numbers are those of the files at the date above; search the quoted text if
 ### SE-05 · AGR-05 hands `app_fixtures` to Agent 5 «تأیید Agent 1» but no approval is recorded
 - **Evidence:** `13-agent-protocol.md:24` (AGR-05): the package `app_fixtures` is «تقسیم تازه؛ تأیید Agent 1». `14-execution-order-and-gates.md:20` (EOX-01) already assumes Agent 5 builds it in wave 0. No document records Agent 1's answer (AG-16).
 - **Proposed text:** once approved, replace the parenthetical with «(تأییدشده در AGX-NN)» or delete it.
-- **Interim rule:** the Tester hat owns `app_fixtures`; Product/Contracts records «accepted» in the first fixtures task packet and in `docs/ops/AGENT_LOG.md`.
+- **Change made (T-024):** «accepted» was recorded in `docs/agents/tasks/T-022.md` and `docs/ops/AGENT_LOG.md` (T-022, PR #34, merged `85d6093`); the parenthetical «(تقسیم تازه؛ تأیید Agent 1)» is deleted from AGR-05 (the proposal's second option, because no AGX number exists). The Tester hat owns `lib/fixtures/**`.
+- **Interim rule:** none (closed).
 
 ### SE-06 · `border-strong` is described as «کمینه ۳٫۳:۱» but only 3:1 is required
 - **Evidence:** `02-tokens.md:29`: «(کمینه ۳٫۳:۱)». The check threshold is 3 (VTG-06, `11:70`; table A-4-a, `A-appendix-tokens.md:535`). Recomputed from `design_tokens.json`: light minimum 3.3095 (shown 3.31), dark minimum **3.2982** on `surface-raised` (shown 3.30). The tokens pass; only the sentence over-promises by 0.002.
 - **Proposed text:** «(کمینه ۳:۱؛ VTG-06)».
-- **Interim rule:** the threshold 3:1 governs; `tool/docs_check` (T2) and `ui_check` use the table numbers.
+- **Change made (T-024):** `02:29` now reads «(کمینه ۳:۱؛ VTG-06)». `design_tokens.json` is untouched (checksum AX-02 unchanged). The «۳٫۳:۱» in CC-15 (ح) (`7-16-09.md`, chart series) is a different claim and is not part of this erratum.
+- **Interim rule:** none (closed).
 
 ### SE-07 · QE-03 does not name its fixture (info)
 - **Evidence:** `06-quickadd-and-three-tier.md:11` (QE-03) types «۱۲۵۰۰۰» but names no dataset; with `empty` the main button is disabled (SD-05, `06:101`). `10-style-guide-and-fixtures.md:33` (DS-02) already says a test that brings its own data (it names QE-03 and SD-05) runs over `normal`; UT-03 (`11:159`) names `normal` too.
@@ -72,7 +77,7 @@ Line numbers are those of the files at the date above; search the quoted text if
 - **Interim rule:** QE-03 runs over `normal`.
 
 ### SE-08 · Amount overflow: a message (NM-06) or silence (AM-01, TQ-13)?
-- **Evidence:** `03-typography-rtl.md:73` (NM-06): beyond 18 digits «از آن بیشتر را فیلد نمی‌پذیرد و **پیام فارسی نشان می‌دهد**». `06-quickadd-and-three-tier.md:42` (AM-01): «رقم بعدی پذیرفته نمی‌شود». `06:337` (TQ-13): «رقم بعدی **بی‌صدا و بدون پیام** پذیرفته نمی‌شود». FD-03 (`7-03-fields.md:79`) also clips text silently. The copy catalog has no row for an overflow message.
+- **Evidence:** `03-typography-rtl.md:73` (NM-06): beyond 18 digits «از آن بیشتر را فیلد نمی‌پذیرد و **پیام فارسی نشان می‌دهد**». `06-quickadd-and-three-tier.md:42` (AM-01): «رقم بعدی پذیرفته نمی‌شود». `06:339` (TQ-13): «رقم بعدی **بی‌صدا و بدون پیام** پذیرفته نمی‌شود». FD-03 (`7-03-fields.md:79`) also clips text silently. The copy catalog has no row for an overflow message.
 - **Options:** (A) silent, as AM-01 and TQ-13 say: edit NM-06 to «از آن بیشتر را فیلد بی‌صدا نمی‌پذیرد (AM-01)». (B) keep a message: add a catalog row (`QX-NN`, e.g. «به بیشترین تعداد رقم رسیده‌اید.») shown as a polite live-region announcement, and change TQ-13. A silent field can confuse a screen-reader user who keeps typing; that is the only argument for B.
 - **Interim rule:** A (it matches the written tests). Add the screen-reader case to the AMT list when the first TalkBack run happens; Product/Contracts decides between A and B then.
 
@@ -106,6 +111,11 @@ Line numbers are those of the files at the date above; search the quoted text if
 - **Evidence:** DS-02 (`10-style-guide-and-fixtures.md`) puts Persian names, titles and labels into `app_fixtures`, but MC-17 (table 11-2-a, `11-testing-and-machine-checks.md`) allows Persian string literals in `lib/**.dart` only in the generated copy catalog and the Style Guide folder, and the `rules` stage is a blocking CI step (T-019). DS-06 says «سری‌ها یکدیگر را قطع می‌کنند», but value(s+1, m) − value(s, m) = 10^14 + Δk × 3 × 10^13 with Δk ≥ −1, so ≥ 7 × 10^13 > 0 for every series and month: the series never cross (their ranges overlap). Found by T-022 (PR #34), raised as ESC-006, decided by ADVISOR_REPLY-006 (D2, Q1 A and Q2 A). Agent 1 approval for the new "allowed in" cell (VR-03): given by ADVISOR_REPLY-006 plus this entry (Product/Contracts hat, T-023).
 - **Change made:** MC-17 "allowed in" += exactly the folder `lib/fixtures/` (fixture text is test data, not copy, CM-10), on the condition that no file in `lib/` outside `lib/fixtures/` and the Style Guide folder imports or exports it. `ui_check rules` (`tool/ui_check/src/rules_stage.dart`) implements the cell anchored at `lib/` (no other `fixtures/` folder is exempt) and the condition as a second MC-17 check on `import`/`export` directives whose URI is `package:bluehesab_mini/fixtures/…` or resolves into `lib/fixtures/`. DS-06 keeps its formula and now says the ranges overlap but the series do not cross. The table 10-2 row W-09 already covers a line that crosses zero (chart 2).
 - **Interim rule:** none (closed by the same PR that amended the spec). Until that PR is on `main`, the ESC-006 default holds: no Persian literal in `lib/fixtures/`.
+
+### SE-16 · W-09 charts 2–4 and W-12 are given only in words
+- **Evidence:** table 10-2-ت (`10-style-guide-and-fixtures.md`) row W-09 says «نمودار دوم با یک سری که از W-02 تا W-01 صفر را قطع می‌کند؛ نمودار سوم با همه‌ی مقدارها صفر؛ نمودار چهارم با یک نقطه» and row W-12 says «تکرار متناوب W-05 و W-01 با تاریخ‌های نزولی» (200 rows). Neither gives the number of points, the values between, the series/month count, the start date, the step or the other fields of each row, so the fixture cannot be built without inventing numbers (AG-05, AG-08). Found by T-025 (PR #38), raised as ESC-007, decided by ADVISOR_REPLY-007 (D2, Decision A, NEEDS_OWNER: no).
+- **Proposed text:** table 10-2-ت rows W-09 and W-12 get the exact data of the interim rule below (ADVISOR_REPLY-007 Action 2), in a spec PR that closes this erratum.
+- **Interim rule:** (1) **Chart 2:** one series, 12 months; `value(m) = W-02 + floor((m − 1) × 2 × |W-01| ÷ 11)` toman (the numerator is ≥ 0, so floor = toward zero); m = 12 equals W-01 (the formula gives it; a test still asserts it). Values, m = 1…12: −987654321012345, −808080808101010, −628507295189675, −448933782278339, −269360269367004, −89786756455668, 89786756455667, 269360269367003, 448933782278338, 628507295189674, 808080808101009, 987654321012345; none is 0, the sign changes between m = 6 and 7, at most 15 digits, minor units (×10) fit int64 (DS-07). (2) **Chart 3:** same shape as chart 1: 5 series × 12 months, every value 0 toman. (3) **Chart 4:** one series, one point, m = 1, value W-01. (4) **W-12:** rows i = 0…199. Even i: title W-05, amount 320 000 toman (table 10-2-ب row 1). Odd i: title and key of table 10-2-ب row 1 («ناهار با همکاران», `lunch_with_colleagues`), amount W-01. All rows: expense, category `food`, account `cash`, local date = 2 Aban 1405 − i days at the DS-01 time of day (i = 199 is 19 Farvardin 1405, so all rows stay in 1405). Order = i ascending (dates descending). Row keys `w12_000`…`w12_199`. W-12 is a list-only set: not part of any DS-03 total or DD-06 balance check. Until the fixture task that implements this is merged, no test or golden uses W-09 charts 2–4 or W-12 (ESC-007 default).
 
 ## Closing checklist (per erratum)
 1. Request recorded (AGX-01) and answered (AG-16); 2. the spec text amended in a PR that names the erratum ID; 3. `docs_check --strict` and the self-test pass; 4. tokens untouched or their checksum regenerated through an ADR (AX-02); 5. this table row set to `CLOSED` with the PR link; 6. interim rule deleted.
