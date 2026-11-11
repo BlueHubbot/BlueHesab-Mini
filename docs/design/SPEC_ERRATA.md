@@ -24,7 +24,7 @@
 | SE-06 | clarify | low | 02 · `border-strong` ↔ 11 · VTG-06 | next housekeeping pass | OPEN |
 | SE-07 | info | — | 06 · QE-03 ↔ 10 · DS-02 | — | INFO |
 | SE-08 | contradiction | **medium** | 03 · NM-06 ↔ 06 · AM-01, TQ-13 | before the QuickAdd task (M2) | OPEN |
-| SE-09 | gap | **medium** | 10 · tables 10-2-ب, 10-2-پ | before the first `app_fixtures` task (M0) | OPEN |
+| SE-09 | gap | **medium** | 10 · tables 10-2-ب, 10-2-پ | before the first `app_fixtures` task (M0) | CLOSED (fixture in T-022, PR #34; spec amended in T-027) |
 | SE-10 | info | — | 08 · AI-14 ↔ 07-8 · PD-05 | — | INFO |
 | SE-11 | gap | low | 08 · AIX-11 ↔ 06 · QX-16 | before v0.4 | OPEN |
 | SE-12 | gap | low | 01 · VI-15 ↔ 09 · HMX-01 ↔ 05 · DM-01 | before the Home task (M2) | OPEN |
@@ -79,7 +79,8 @@ Line numbers are those of the files at the date above; search the quoted text if
 ### SE-09 · The reference data cannot produce the «۱۲٪ کمتر از مهر» figure
 - **Evidence:** `10-style-guide-and-fixtures.md:73` (table 10-2-پ) shows «۱۲٪ کمتر از مهر» from a same-period Mehr amount of 2 000 000 toman, but table 10-2-ب (`10:52-62`) has only Aban 1405 rows, and DS-03 (`10:34`) checks sums only for Aban. A real computation (DD-11) over the fixture finds no previous-month spending and hides the line, so the golden would differ from the spec.
 - **Proposed data (new table «جدول ۱۰-۲-ب۲: تراکنش‌های مهر ۱۴۰۵ (`normal`)»):** `۱ مهر · خرید هفتگی سوپرمارکت · هزینه · غذا · بانک ملی · ۱٬۲۰۰٬۰۰۰`; `۲ مهر · قبض گاز · هزینه · قبوض · بانک ملی · ۸۰۰٬۰۰۰`; `۱۵ مهر · بنزین · هزینه · خودرو · نقدی · ۹۰۰٬۰۰۰` (outside the same-length period, so it proves the exclusion). The first two sum to 2 000 000. Opening balances are chosen so the displayed balances of table 10-2-الف stay unchanged (DD-06). DS-03 gains «مقدار هم‌بازه‌ی مهر برابر جمع ۱ و ۲ مهر است»; DS-07 «ترتیب و تعداد ردیف‌ها همان جدول‌هاست» then counts the new table.
-- **Interim rule:** `app_fixtures` includes the three Mehr rows and a README line that says they extend table 10-2-ب; the Home golden «۱۲٪ کمتر از مهر» is then produced by the real use case.
+- **Change made (T-027):** `10-style-guide-and-fixtures.md` §10-2 has the new table «جدول ۱۰-۲-ب۲: تراکنش‌های مهر ۱۴۰۵ (`normal`)» with the three rows above word for word, a sentence that the 15 Mehr row tests the exclusion and that names the opening balances (DD-06: cash 2 265 000, Bank Melli 645 000, savings 30 000 000 toman; recomputed from tables 10-2-الف, 10-2-ب and 10-2-ب2, equal to `lib/fixtures` since T-022), and DS-03 gains «مقدار هم‌بازه‌ی مهر برابر جمع ۱ و ۲ مهر است (جدول ۱۰-۲-ب۲)». DS-07 needs no edit: its «ترتیب و تعداد ردیف‌ها همان جدول‌هاست» now counts the new table. The proposed-data line above stays as history (`test/fixtures/fixture_text_fa_test.dart` reads the Mehr titles from it until the Tester points it at the spec table).
+- **Interim rule:** none (closed).
 
 ### SE-10 · `PulseDotState.error` exists but the assistant never uses it (info)
 - **Evidence:** `07-components/7-08-pulse-dot.md:8` and PD-05 (`7-08:57`) define `error`; AI-14 (`08-assistant-ui.md:175`) says the assistant does not use it because failures use `FieldMessage` with an error icon (PD-05).
