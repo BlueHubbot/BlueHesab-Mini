@@ -1,5 +1,5 @@
 // The `normal` and `empty` reference sets (DS-02, DS-03; tables 10-2-alef,
-// 10-2-be, 10-2-pe; SE-09 interim rule; T-022).
+// 10-2-be, 10-2-be2, 10-2-pe; T-022, T-030).
 //
 // Text: every name, title and label is a stable English key; its Persian
 // text is in `FixtureTextFa` (T-025, SE-15). `source` names the spec row of each item.
@@ -33,8 +33,8 @@ final class FixtureSet {
   /// Accounts in table order.
   final List<FixtureAccount> accounts;
 
-  /// Stored transactions: table 10-2-be in table order, then the SE-09
-  /// Mehr rows.
+  /// Stored transactions: table 10-2-be in table order, then table
+  /// 10-2-be2 (Mehr 1405).
   final List<FixtureTransaction> transactions;
 
   /// The insert-test draft (the coffee row, MO-11); not stored (DS-03).
@@ -104,7 +104,7 @@ FixtureTransaction _row(
     );
 
 const String _tBe = 'table 10-2-be';
-const String _se09 = 'SE-09 interim rule (Mehr 1405)';
+const String _tBe2 = 'table 10-2-be2';
 
 /// The `normal` set (DS-03): one currency, three arcs.
 final FixtureSet normalSet = FixtureSet(
@@ -146,11 +146,11 @@ final FixtureSet normalSet = FixtureSet(
     _row('salary_aban', _aban1, FixtureKind.income, 'salary', 'bank_melli',
         '12000000', '$_tBe row 6'),
     _row('weekly_supermarket_mehr', _mehr1, FixtureKind.expense, 'food',
-        'bank_melli', '1200000', '$_se09 row 1'),
+        'bank_melli', '1200000', '$_tBe2 row 1'),
     _row('gas_bill_mehr', _mehr2, FixtureKind.expense, 'bills', 'bank_melli',
-        '800000', '$_se09 row 2'),
+        '800000', '$_tBe2 row 2'),
     _row('gasoline_mehr', _mehr15, FixtureKind.expense, 'car', 'cash',
-        '900000', '$_se09 row 3 (outside the same-length period)'),
+        '900000', '$_tBe2 row 3 (outside the same-length period)'),
   ],
   draftTransaction: _row('coffee', _aban2, FixtureKind.expense, 'food', 'cash',
       '120000', '$_tBe row 7 (new row; DS-03)'),

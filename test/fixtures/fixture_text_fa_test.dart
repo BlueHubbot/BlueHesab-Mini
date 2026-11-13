@@ -1,5 +1,5 @@
 // T-025: the Persian text of `app_fixtures` (DS-02, tables 10-2-alef to
-// 10-2-te, W-05, W-07; SE-09 Mehr rows; SE-15). The texts are checked
+// 10-2-te, W-05, W-07; SE-15). The texts are checked
 // against the spec files themselves, so a typed variant fails.
 
 import 'dart:io';
@@ -21,14 +21,54 @@ String _section102() {
   return spec.substring(start, end);
 }
 
-/// The SE-09 entry of the errata register (proposed Mehr rows).
-String _se09() {
-  final String errata =
-      File('docs/design/SPEC_ERRATA.md').readAsStringSync();
-  final int start = errata.indexOf('### SE-09');
-  expect(start, greaterThanOrEqualTo(0), reason: 'SE-09 entry');
-  return errata.substring(start, errata.indexOf('\n### ', start + 1));
+/// Caption of table 10-2-be2 (Mehr 1405 rows, T-027) inside §10-2.
+const String _tableBe2Caption = 'جدول ۱۰-۲-ب۲:';
+
+/// The text of [section] from the table 10-2-be2 caption to the end.
+String _fromTableBe2(String section) {
+  final int start = section.indexOf(_tableBe2Caption);
+  expect(start, greaterThanOrEqualTo(0), reason: 'caption of table 10-2-be2');
+  return section.substring(start);
 }
+
+/// Data rows of table 10-2-be2 as trimmed cells (header and rule dropped).
+List<List<String>> _tableBe2Rows(String section) {
+  final List<List<String>> rows = <List<String>>[];
+  bool inTable = false;
+  for (final String line in _fromTableBe2(section).split('\n').skip(1)) {
+    if (line.startsWith('|')) {
+      inTable = true;
+      final List<String> cells = line.split('|');
+      rows.add(cells
+          .sublist(1, cells.length - 1)
+          .map((String c) => c.trim())
+          .toList());
+    } else if (inTable) {
+      break;
+    }
+  }
+  expect(rows.length, greaterThanOrEqualTo(2), reason: 'header and rule');
+  return rows.sublist(2);
+}
+
+/// A number written with Persian digits and the Arabic thousands separator
+/// (U+066C), as in the §10-2 tables; never parsed through `double`.
+BigInt _faNumber(String text) {
+  final StringBuffer ascii = StringBuffer();
+  for (final int unit in text.codeUnits) {
+    if (unit >= 0x06F0 && unit <= 0x06F9) {
+      ascii.writeCharCode(0x30 + unit - 0x06F0);
+    } else if (unit != 0x066C) {
+      fail('not a Persian number: $text');
+    }
+  }
+  return BigInt.parse(ascii.toString());
+}
+
+/// The fixture transaction whose title text is [title].
+FixtureTransaction _byTitle(Iterable<FixtureTransaction> rows, String title) =>
+    rows.singleWhere(
+        (FixtureTransaction t) => FixtureTextFa.transactions[t.key] == title);
 
 /// Every text of [FixtureTextFa] with a label for failure messages.
 Map<String, String> _allTexts() => <String, String>{
@@ -130,17 +170,9 @@ void main() {
   });
 
   group('texts equal the spec cells', () {
-    test('every text except the Mehr titles occurs in §10-2 inside «»', () {
+    test('every text occurs in §10-2 as a cell or inside «»', () {
       final String section = _section102();
-      const Set<String> mehr = <String>{
-        'transactions.weekly_supermarket_mehr',
-        'transactions.gas_bill_mehr',
-        'transactions.gasoline_mehr',
-      };
       _allTexts().forEach((String label, String text) {
-        if (mehr.contains(label)) {
-          return;
-        }
         // Table cells are quoted «…» or stand alone between `|`, `،`, `؛`
         // or the start of a parenthesis.
         final bool quoted = section.contains('«$text»');
@@ -149,16 +181,55 @@ void main() {
         expect(quoted || cell, isTrue, reason: '$label = $text');
       });
     });
+  });
 
-    test('the Mehr titles occur in the SE-09 proposed rows', () {
-      final String se09 = _se09();
-      for (final String key in <String>[
-        'weekly_supermarket_mehr',
-        'gas_bill_mehr',
-        'gasoline_mehr',
-      ]) {
-        final String text = FixtureTextFa.transactions[key]!;
-        expect(se09, contains('· $text ·'), reason: key);
+  group('table 10-2-be2 equals the Mehr rows of normal (T-030)', () {
+    final Iterable<FixtureTransaction> mehrRows = normalSet.transactions
+        .where((FixtureTransaction t) =>
+            t.date.jalaliYear == 1405 && t.date.jalaliMonth == 7);
+
+    test('three rows, one per fixture Mehr row, all citing the table', () {
+      final List<List<String>> rows = _tableBe2Rows(_section102());
+      expect(rows.length, 3);
+      expect(mehrRows.length, 3);
+      for (final FixtureTransaction t in mehrRows) {
+        expect(t.source, startsWith('table 10-2-be2 row '), reason: t.key);
+      }
+    });
+
+    test('date, title, kind, category, account and amount per row', () {
+      final List<List<String>> rows = _tableBe2Rows(_section102());
+      for (int i = 0; i < rows.length; i++) {
+        final List<String> cells = rows[i];
+        expect(cells.length, 6, reason: 'row ${i + 1}');
+        final FixtureTransaction t = _byTitle(mehrRows, cells[1]);
+        expect(t.source, startsWith('table 10-2-be2 row ${i + 1}'),
+            reason: t.key);
+        final List<String> date = cells[0].split(' ');
+        expect(date.length, 2, reason: cells[0]);
+        expect(date[1], 'مهر', reason: cells[0]);
+        expect(_faNumber(date[0]), BigInt.from(t.date.jalaliDay),
+            reason: t.key);
+        expect(t.kind, FixtureKind.expense, reason: t.key);
+        expect(cells[2], 'هزینه', reason: t.key);
+        expect(cells[3], FixtureTextFa.categories[t.categoryKey],
+            reason: t.key);
+        expect(cells[4], FixtureTextFa.accounts[t.accountKey], reason: t.key);
+        expect(t.amount, FixtureAmount.toman(_faNumber(cells[5]).toString()),
+            reason: t.key);
+      }
+    });
+
+    test('opening balances equal the sentence under the table (DD-06)', () {
+      final String after = _fromTableBe2(_section102());
+      for (final FixtureAccount a in normalSet.accounts) {
+        final String name = FixtureTextFa.accounts[a.key]!;
+        final Match? m =
+            RegExp('${RegExp.escape(name)} ([۰-۹٬]+)').firstMatch(after);
+        expect(m, isNotNull, reason: a.key);
+        final BigInt toman = _faNumber(m!.group(1)!);
+        expect(a.opening, FixtureAmount.toman(toman.toString()),
+            reason: a.key);
       }
     });
   });

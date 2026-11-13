@@ -1,7 +1,7 @@
 // The Persian text of the reference data (ui-spec §10-2, DS-02; T-025).
 //
 // Each value is the table cell of `10-style-guide-and-fixtures.md` §10-2
-// (or the SE-09 Mehr rows of `SPEC_ERRATA.md`), copied byte for byte. This
+// (table 10-2-be2 for the Mehr rows), copied byte for byte. This
 // is test data, not product copy (CM-10): MC-17 allows Persian literals in
 // `lib/fixtures/` only, and no file outside `lib/fixtures/` and
 // `lib/style_guide/` may import it (SE-15, ADVISOR_REPLY-006).
@@ -19,7 +19,7 @@ abstract final class FixtureTextFa {
   };
 
   /// Transaction titles: table 10-2-be rows 1-7 (row 7 = the `coffee` draft)
-  /// and the SE-09 Mehr rows.
+  /// and table 10-2-be2 rows 1-3 (Mehr 1405).
   static const Map<String, String> transactions = <String, String>{
     'lunch_with_colleagues': 'ناهار با همکاران',
     'snapp_ride': 'اسنپ',
@@ -78,7 +78,7 @@ abstract final class FixtureTextFa {
   };
 
   /// Comparison line of `monthSpending` as displayed, table 10-2-pe (DD-11,
-  /// SE-09).
+  /// table 10-2-be2).
   static const String monthSpendingComparison =
       '۱۲٪ کمتر از مهر';
 
