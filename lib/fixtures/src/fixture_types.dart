@@ -265,3 +265,18 @@ final class FixtureStatedTotals {
   /// The "12 % less than Mehr" figure as an integer percentage (DD-11).
   final int comparisonPercentLess;
 }
+
+/// One row of a list-only set (W-12): a row key plus the transaction shown.
+///
+/// The transaction's `key` is the title text key, as in the `normal` set;
+/// [rowKey] tells rows with the same title apart (SE-16, T-028).
+final class FixtureListRow {
+  /// Creates a list row.
+  const FixtureListRow(this.rowKey, this.transaction);
+
+  /// Stable row key, for example `w12_000`.
+  final String rowKey;
+
+  /// The row's content.
+  final FixtureTransaction transaction;
+}
