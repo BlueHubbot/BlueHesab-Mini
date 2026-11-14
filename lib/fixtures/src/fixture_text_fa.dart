@@ -6,7 +6,8 @@
 // `lib/fixtures/` only, and no file outside `lib/fixtures/` and
 // `lib/style_guide/` may import it (SE-15, ADVISOR_REPLY-006).
 //
-// Not here (ESC-007): W-09 charts 2 to 4 and W-12; W-10 is v0.4.
+// W-12 rows reuse `w05Title` (key `w05_title`) and the `transactions`
+// text of `lunch_with_colleagues` (SE-16, T-028); W-10 is v0.4.
 
 /// Persian text of the `normal` and `worst` sets, grouped by kind because
 /// one English key can name two kinds (`tasks` is an arc and a list).

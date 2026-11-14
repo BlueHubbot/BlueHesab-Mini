@@ -24,7 +24,7 @@ Synthetic reference data of ui-spec §10-2 (DS-01…DS-07) for tests and the Sty
 | categories `food`, `transport`, `home`, `bills`, `health`, `education`, `clothing`, `entertainment`, `gifts`, `car`, `online_shopping`, `other`; frequent `food`, `transport`, `bills`, `car`, `home`; income `salary` | table 10-2-پ «دسته‌های هزینه» |
 
 ## `worst` (DS-04, table 10-2-ت)
-In: W-01, W-02, W-03, W-04, W-05 and W-07 (text, `FixtureTextFa`), W-06, W-08 (Latin parts), W-09 chart 1 (DS-06), W-11. Not yet: W-09 charts 2–4 (no values given) and W-12 (alternation order and dates not given), both ESC-007; W-10 (assistant card, v0.4). DS-06 is implemented as written; its series do not cross (SE-15, recorded by a test).
+In: W-01, W-02, W-03, W-04, W-05 and W-07 (text, `FixtureTextFa`), W-06, W-08 (Latin parts), W-09 chart 1 (DS-06), W-09 charts 2–4 and W-12 (SE-16 interim rule = ADVISOR_REPLY-007 Decision 1–4, T-028: `w09Chart2`, `w09Chart3`, `w09Chart4`, `w12Rows` of `FixtureListRow`; the W-05 title has text key `w05_title`), W-11. Not here: W-10 (assistant card, v0.4). DS-06 is implemented as written; its series do not cross (SE-15, recorded by a test).
 
 ## `empty`
 No account, transaction or arc (DS-02).
