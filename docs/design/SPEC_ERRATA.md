@@ -19,7 +19,7 @@
 | SE-01 | clarify | low | 14 · GTX-03 | before v0.4 (smart input is `NOT_IN_BUILD` in v0.1) | OPEN |
 | SE-02 | clarify | low | 13 · AG-10 ↔ 06 §6-7 | next housekeeping pass | CLOSED (spec amended in T-024) |
 | SE-03 | clarify | low | 09 intro ↔ 10-1-الف | next housekeeping pass | CLOSED (spec amended in T-024) |
-| SE-04 | gap | **medium** | 05 · HM-04 ↔ 09 · HMX | before the Home task (M2) | OPEN (DD-11 written) |
+| SE-04 | gap | **medium** | 05 · HM-04 ↔ 09 · HMX | before the Home task (M2) | CLOSED (DD-11 written; spec amended in T-032) |
 | SE-05 | record | low | 13 · AGR-05 ↔ 14 · EOX-01 | before the first `app_fixtures` task (M0) | CLOSED (accepted in T-022, PR #34; spec amended in T-024) |
 | SE-06 | clarify | low | 02 · `border-strong` ↔ 11 · VTG-06 | next housekeeping pass | CLOSED (spec amended in T-024) |
 | SE-07 | info | — | 06 · QE-03 ↔ 10 · DS-02 | — | INFO |
@@ -57,7 +57,8 @@ Line numbers are those of the files at the date above; search the quoted text if
 - **Evidence:** `05-navigation-home-modules.md:139` (HM-04, widget `monthSpending`): «یک عدد اصلی و یک خط مقایسه («۱۲٪ کمتر از مهر»)». The fixture (`10:73`, table 10-2-پ) says the compared amount is «مقدار هم‌بازه‌ی مهر ۲٬۰۰۰٬۰۰۰ تومان», that is, the **same elapsed period** of the previous month (1 760 000 vs 2 000 000 gives 12 %). No rule states that basis, how the percentage is rounded, or when the line is hidden; `09-tone-and-copy.md` (HMX-01…07) has no row for the «کمتر / بیشتر» sentence with its two parameters. The Reports page (F08, «مقایسه با ماه قبل») needs the same rule.
 - **Proposed text (rule, in HM-04 or as a new HM rule right after it):** «خط مقایسه، هزینه‌ی بازه‌ی گذشته‌ی ماه جاری را با همان تعداد روز از ابتدای ماه قبل می‌سنجد؛ ماه تمام‌شده با کل ماه قبل. درصد عدد صحیح است و از نیم به بالا گرد می‌شود. اگر ماه قبل هزینه نداشته یا درصد گردشده صفر است، خط نمایش داده نمی‌شود.»
 - **Proposed text (copy rows):** `| HMX-NN | خط مقایسه‌ی «هزینه‌ی این ماه» (HM-04) | کمتر: «{n}٪ کمتر از {ماه}»؛ بیشتر: «{n}٪ بیشتر از {ماه}»؛ {n} با حالت ارقام کاربر (NM-01)، {ماه} نام ماه از لایه‌ی تاریخ |` with keys `hmx.NN.less` and `hmx.NN.more` (KN-01); the Product/Contracts hat picks the next free number.
-- **Interim rule:** compute with `DATA_MODEL.md` **DD-11** (the project-level algorithm, which already contains the rounding and hiding rules). Until the HMX row exists, Builder-UI raises an AGX-01 request and uses the two strings above from the generated catalog; no Persian literal in the widget (CM-10).
+- **Change made (T-032):** `05-navigation-home-modules.md` HM-04 now ends with the proposed rule word for word except that «خط مقایسه» is written «خط مقایسه‌ی `monthSpending`» to name the widget of the table above, plus «محاسبه همان DD-11 در `DATA_MODEL.md` است و متن خط HMX-08 (SE-04).»; `09-tone-and-copy.md` table 9-4 has the new row HMX-08 with the proposed text (keys `hmx.08.less` and `hmx.08.more` by KN-01); KN-02 lists the new parameter `{ماه}` ← `month` that this row needs. DD-11 is unchanged and stays the algorithm (same basis, round half up, hidden when `previous` is 0 or the rounded percentage is 0). Tokens untouched.
+- **Interim rule:** none (closed). The old interim rule (compute with DD-11; Builder-UI raises AGX-01 for the strings) is history.
 
 ### SE-05 · AGR-05 hands `app_fixtures` to Agent 5 «تأیید Agent 1» but no approval is recorded
 - **Evidence:** `13-agent-protocol.md:24` (AGR-05): the package `app_fixtures` is «تقسیم تازه؛ تأیید Agent 1». `14-execution-order-and-gates.md:20` (EOX-01) already assumes Agent 5 builds it in wave 0. No document records Agent 1's answer (AG-16).
