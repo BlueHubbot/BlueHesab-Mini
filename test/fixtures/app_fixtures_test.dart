@@ -1,6 +1,6 @@
 // T-022: the claims of ui-spec §10-2 checked by computation over the rows of
-// `app_fixtures` (DS-01, DS-03, DS-06, DS-07; DD-06, DD-11; SE-09 interim
-// rule; ESC-006 item 2). Totals are derived from the rows, never copied.
+// `app_fixtures` (DS-01, DS-03, DS-06, DS-07; DD-06, DD-11; table
+// 10-2-be2; ESC-006 item 2). Totals are derived from the rows, never copied.
 
 import 'dart:io';
 
@@ -200,7 +200,7 @@ void main() {
       );
     });
 
-    test('DD-06: opening + income - expense = displayed balance (SE-09)', () {
+    test('DD-06: opening + income - expense = displayed balance (10-2-be2)', () {
       for (final FixtureAccount a in fx.accounts) {
         BigInt balance = a.opening.minor;
         for (final FixtureTransaction t in fx.transactions) {
@@ -214,7 +214,7 @@ void main() {
       }
     });
 
-    test('DD-11 + SE-09: same-period Mehr = 2,000,000, 15 Mehr excluded, 12 %',
+    test('DD-11 + 10-2-be2: same-period Mehr = 2,000,000, 15 Mehr excluded, 12 %',
         () {
       final int elapsed = FixtureEnvironment.today.jalaliDay;
       BigInt expenseIn(int month) => _sum(fx.transactions

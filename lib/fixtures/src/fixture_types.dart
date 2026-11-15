@@ -136,7 +136,8 @@ final class FixtureAccount {
   /// Cash or bank.
   final FixtureAccountKind kind;
 
-  /// Opening balance chosen so that [displayedBalance] holds (SE-09, DD-06).
+  /// Opening balance chosen so that [displayedBalance] holds (DD-06; stated
+  /// in the sentence under table 10-2-be2).
   final FixtureAmount opening;
 
   /// Balance shown in table 10-2-alef at the DS-01 instant.
@@ -177,7 +178,7 @@ final class FixtureTransaction {
   /// Positive amount (DD-02).
   final FixtureAmount amount;
 
-  /// Where the row comes from (spec table and row, or the SE-09 interim rule).
+  /// Where the row comes from (spec table and row).
   final String source;
 }
 
