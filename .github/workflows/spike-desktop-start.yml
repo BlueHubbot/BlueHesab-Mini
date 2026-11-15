@@ -1,0 +1,82 @@
+# T-031 (SP-09, SPIKE_REPORT §5 "Desktop cold start"): time from process
+# spawn to the first rasterized frame of the root app on macOS and Windows.
+# The marker lives in spike/T-031-desktop-start/first_frame_main.dart; lib/
+# is unchanged. Pinned Flutter, no new action or dependency (CB-9, SP-6).
+name: Spike T-031 desktop start
+
+on:
+  pull_request:
+    paths:
+      - "spike/T-031-desktop-start/**"
+      - ".github/workflows/spike-desktop-start.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spike-desktop-start-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  macos:
+    name: macos start time (first frame)
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: Build the marker entry (release)
+        run: |
+          bash tool/ci/run_logged.sh "build macos marker" flutter build macos --release \
+            -t spike/T-031-desktop-start/first_frame_main.dart
+          mkdir -p "$RUNNER_TEMP/marker"
+          ditto build/macos/Build/Products/Release/bluehesab_mini.app "$RUNNER_TEMP/marker/bluehesab_mini.app"
+      - name: Build the unchanged root app (release, negative control)
+        run: bash tool/ci/run_logged.sh "build macos" flutter build macos --release
+      - name: Start time, 5 runs (indicative; CI runner, not the reference device)
+        timeout-minutes: 10
+        run: |
+          python3 -I spike/T-031-desktop-start/tool/start_time.py measure \
+            "$RUNNER_TEMP/marker/bluehesab_mini.app/Contents/MacOS/bluehesab_mini" --label macos
+      - name: Negative control (no marker, must still run after 20 s)
+        timeout-minutes: 5
+        run: |
+          python3 -I spike/T-031-desktop-start/tool/start_time.py control \
+            build/macos/Build/Products/Release/bluehesab_mini.app/Contents/MacOS/bluehesab_mini --label macos
+
+  windows:
+    name: windows start time (first frame)
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, node24 (SP-6)
+      - name: Install pinned Flutter
+        run: bash tool/ci/run_logged.sh "install flutter" bash tool/ci/install_flutter.sh
+      - name: Resolve packages from the committed lockfile
+        run: bash tool/ci/run_logged.sh "pub get" flutter pub get --enforce-lockfile
+      - name: Build the marker entry (release)
+        run: |
+          bash tool/ci/run_logged.sh "build windows marker" flutter build windows --release \
+            -t spike/T-031-desktop-start/first_frame_main.dart
+          mkdir -p "$RUNNER_TEMP/marker"
+          cp -R build/windows/x64/runner/Release/. "$RUNNER_TEMP/marker/"
+      - name: Build the unchanged root app (release, negative control)
+        run: bash tool/ci/run_logged.sh "build windows" flutter build windows --release
+      - name: Start time, 5 runs (indicative; CI runner, not the reference device)
+        timeout-minutes: 10
+        run: |
+          python -I spike/T-031-desktop-start/tool/start_time.py measure \
+            "$RUNNER_TEMP/marker/bluehesab_mini.exe" --label windows
+      - name: Negative control (no marker, must still run after 20 s)
+        timeout-minutes: 5
+        run: |
+          python -I spike/T-031-desktop-start/tool/start_time.py control \
+            build/windows/x64/runner/Release/bluehesab_mini.exe --label windows
