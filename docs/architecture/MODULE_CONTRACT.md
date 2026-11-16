@@ -74,9 +74,9 @@ Rules for contributions:
 | Destination | `budget`, route `/budget`, accent `accent-finance`, group "مالی", owner Agent 3; pinnable (BN-02). Default ON. |
 | Entities | `m_budget_limits` (DATA_MODEL §5). Optionally goals (saving targets) later, not in v0.1. |
 | Use cases | `SetBudgetLimit`, `GetBudgetPeriod(month, calendar)`, `ListBudgetPeriods`, `SupersedeBudgetLimit`. All math in domain with `BigInt` (DD-09). |
-| Contributions | Home budget progress bar and `DayRing` budget arc (needs this module; spec 1-3; the day-ring empty text VI-15 is amended by SE-12). **Not in v0.1:** a report section (the budget page already shows limit against spending per category; a `ReportSectionContribution` may come later) and the reminder when a category exceeds its limit. |
+| Contributions | Home budget progress bar and `DayRing` budget arc (needs this module; spec 1-3; the day-ring empty text is the budget sentence of HMX-01, chosen by the host from the enabled arc providers, VI-15, MDC-A4). **Not in v0.1:** a report section (the budget page already shows limit against spending per category; a `ReportSectionContribution` may come later) and the reminder when a category exceeds its limit. |
 | Reads from core | categories (read-only), transactions aggregate per category and month via a core read port `SpendingQuery` (returns per-category sums computed in the domain, not SQL). |
-| Disabled | Home progress bar, arc, nav item and settings entry vanish; the day-ring card follows the interim rule of SE-12; `m_budget_limits` kept. |
+| Disabled | Home progress bar, arc, nav item and settings entry vanish; the day-ring card is not shown while no arc-providing module is enabled (HM-01, DM-01); `m_budget_limits` kept. |
 | Copy | DMX-02 for the settings description; budget screens use the copy catalog rows added by task cards (UI-delta U-4). |
 
 ## 7. Later modules (reservations, not designs)
