@@ -35,7 +35,10 @@ List<_SpecRow> _readTable() {
     final List<String> cells =
         line.split('|').map((String c) => c.trim()).toList();
     // ['', id, event, what moves, duration and curve, meaning, reduced, '']
-    expect(cells.length, 8, reason: 'table 4-3 layout changed: $line');
+    if (cells.length != 8) {
+      // Read at group level (outside a test), so fail with an error.
+      throw StateError('table 4-3 layout changed: $line');
+    }
     rows.add(_SpecRow(
       cells[1].replaceAll('`', ''),
       cells[3],
