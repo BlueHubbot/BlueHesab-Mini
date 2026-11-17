@@ -12,13 +12,13 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 | MVP gate profile | Lighter gates, same safety guarantees | ACCEPTED | ADR-UI-009 |
 | SMS entry UI | Header button, provenance row, uncertainty handling | PROPOSED (ADR to write) | ADR-UI-010, Q-14 |
 | Money | `BigInt` minor units (IRR = rial), stored as decimal TEXT, shown as toman or rial | OWNER-DECIDED | `DATA_MODEL.md` |
-| Dates | UTC instants, `yyyy-MM-dd` dates, Jalali display via central layer | PROPOSED | `DATA_MODEL.md`, ADR-UI-004 |
+| Dates | UTC instants, `yyyy-MM-dd` dates, Jalali display via central layer; Jalali arithmetic in-house behind the calendar port (no `shamsi_date` dependency) | OWNER-DECIDED (2026-11-16; ADR-UI-004 to be written by the Architect) | `DATA_MODEL.md`, `SPIKE_REPORT.md` §4 #3 |
 | UI direction | Minimal + professional + personal; UI constitution is source of truth | ACCEPTED as spec; ADR-UI-001…008 PROPOSED | `docs/design/ui-spec/` |
 | Spec errata | 12 known gaps in the UI constitution are registered with interim rules; only Product/Contracts edits the spec (AG-02) | OPEN | `docs/design/SPEC_ERRATA.md` |
 | Theme / locale | Light/dark/system; Persian first, RTL | Direction agreed | tokens, font and calendar tests |
 | Navigation | Destination catalog; bottom nav (Compact/Medium), sidebar/top bar (Expanded/Large) | Spec | spec §5 |
-| Framework | Flutter working choice, conditional on spike | OPEN | ADR-0002, ADR-0009, `SPIKE_PLAN.md` (H5) |
-| Local storage | SQLite family (Drift candidate), SQLCipher optional | OPEN | ADR-0003, spike |
+| Framework | Flutter (go after the M0 spike); state and routing: Riverpod + go_router | ACCEPTED (2026-11-16) | ADR-0002, ADR-0009, `SPIKE_REPORT.md` §4 #1, #4 |
+| Local storage | drift + `package:sqlite3` hook, one writer connection; no database encryption in v0.1 (SQLite3MultipleCiphers evaluated in a later spike) | ACCEPTED (2026-11-16) | ADR-0003, `SPIKE_REPORT.md` §4 #2 |
 | Module model | Core + optional modules via `ModuleRegistry`; MVP has only `budget` | PROPOSED | `MODULE_CONTRACT.md` |
 | Capture (SMS/OCR/voice) | Deterministic parser first; one `CaptureDraft`; never auto-save | PROPOSED | `CAPTURE_PIPELINE.md` |
 | AI | Provider-neutral, local/LAN only, propose-never-execute | PROPOSED | ADR-0004, `AI_TOOL_CONTRACT.md` |
@@ -50,3 +50,7 @@ Single index of decisions and their status. Details live in ADRs (`docs/architec
 | 2026-10-31 | Product name changed to **Rewi** (was BlueHesab / آبی‌حساب). Visual identity v2 proposed on the design canvas; the first token palette (Tailwind-like blue/slate) is rejected; T-010 stays on hold until the owner picks the theme(s) | chat |
 | 2026-10-31 | Persian spelling of the name: «رِوی» (with kasra under ر) | chat |
 | 2026-11-01 | Themes: all four (Ivory, Plum, Clay, Glow) ship and the user picks; an automatic mode switches by time of day; a custom theme can be built from our curated palette or freely, guarded by contrast checks (ADR-UI-011, accepted) | chat |
+| 2026-11-16 | ESC-002 / ADVISOR_REPLY-002 Action 4: the 28 PROPOSED status/module colours (4 themes × success, warning, danger, info, accent-health, accent-tasks, accent-car) in the v3 candidate table on PR #21 (branch `agent/contracts-T-012-tokens-v2`) are approved as proposed | chat |
+| 2026-11-16 | SPIKE_REPORT §4: #1 Flutter go (ADR-0002 accepted); #2 drift + hook, one writer connection, no encryption in v0.1 (ADR-0003 accepted); #3 in-house Jalali arithmetic behind the port (ADR-UI-004 to be drafted); #4 Riverpod + go_router accepted (M5 noted in the audit rows); #6 Windows: zip for development builds, installer decided before GTX-06 | chat |
+| 2026-11-16 | SPIKE_REPORT §4 #5 (reference phone, Q-09): open, the owner names the phone later; SP-07 (real phone), SP-08 and the cold-start number wait | chat |
+| 2026-11-16 | Font (ESC-001, ADR-UI-003): run the SP-03 Vazirmatn evaluation first (ADVISOR_REPLY-001 Decision A), then the Architect drafts ADR-UI-003 for acceptance | chat |
