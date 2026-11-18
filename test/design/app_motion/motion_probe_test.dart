@@ -112,6 +112,8 @@ void main() {
     expect(_probe.value(find.byKey(const Key('leaf')), MotionProperty.opacity),
         0);
 
+    // The ticker starts on the next frame (t = 0), then time moves.
+    await tester.pump();
     await tester.pump(MotionToken.base.duration);
     expect(_probe.value(find.byKey(const Key('leaf')), MotionProperty.opacity),
         1);
@@ -165,6 +167,8 @@ void main() {
     expect(_probe.activeCount(_all), 2);
 
     // MO-10 exit (`exit`, 200 ms) ends before enter (`base`, 240 ms).
+    // The ticker starts on the next frame (t = 0), then time moves.
+    await tester.pump();
     await tester.pump(MotionToken.exit.duration);
     expect(_probe.activeCount(find.byKey(a)), 1);
     expect(_probe.activeCount(find.byKey(b)), 0);
@@ -186,6 +190,8 @@ void main() {
     expect(() => _probe.value(leaf, MotionProperty.scale), throwsStateError);
     expect(() => _probe.value(find.byType(Directionality),
         MotionProperty.opacity), throwsStateError);
+    // The ticker starts on the next frame (t = 0), then time moves.
+    await tester.pump();
     await tester.pump(MotionToken.enter.duration);
     expect(_probe.value(leaf, MotionProperty.dx), 0);
     await tester.pumpWidget(const SizedBox());
@@ -202,6 +208,8 @@ void main() {
     expect(r.controller.duration, MotionToken.exit.duration);
     expect(_probe.activeCount(_all), 1);
     expect(_probe.value(leaf, MotionProperty.dx), 0);
+    // The ticker starts on the next frame (t = 0), then time moves.
+    await tester.pump();
     await tester.pump(MotionToken.exit.duration);
     expect(_probe.value(leaf, MotionProperty.opacity), 1);
     expect(_probe.activeCount(_all), 0);
