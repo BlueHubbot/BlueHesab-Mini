@@ -117,6 +117,9 @@ void main() {
     await tester.pump(MotionToken.base.duration);
     expect(_probe.value(find.byKey(const Key('leaf')), MotionProperty.opacity),
         1);
+    // At t = duration the end value shows; the controller reports done on
+    // the next frame (the simulation ends once t passes the duration).
+    await tester.pump(const Duration(milliseconds: 1));
     expect(_probe.activeCount(_all), 0);
     await tester.pumpAndSettle();
     expect(_probe.activeCount(_all), 0);
@@ -170,6 +173,9 @@ void main() {
     // The ticker starts on the next frame (t = 0), then time moves.
     await tester.pump();
     await tester.pump(MotionToken.exit.duration);
+    // At t = duration the end value shows; the controller reports done on
+    // the next frame (the simulation ends once t passes the duration).
+    await tester.pump(const Duration(milliseconds: 1));
     expect(_probe.activeCount(find.byKey(a)), 1);
     expect(_probe.activeCount(find.byKey(b)), 0);
 
@@ -212,6 +218,9 @@ void main() {
     await tester.pump();
     await tester.pump(MotionToken.exit.duration);
     expect(_probe.value(leaf, MotionProperty.opacity), 1);
+    // At t = duration the end value shows; the controller reports done on
+    // the next frame (the simulation ends once t passes the duration).
+    await tester.pump(const Duration(milliseconds: 1));
     expect(_probe.activeCount(_all), 0);
     await tester.pumpWidget(const SizedBox());
   });
