@@ -37,7 +37,8 @@ final class GroupSummary {
 
 /// Output of [runTokensStage].
 final class StageResult {
-  StageResult(this.findings, this.report, this.computedChecksum);
+  StageResult(this.findings, this.report, this.computedChecksum,
+      {this.groups = const <GroupSummary>[]});
 
   /// Every violation, in the order found.
   final List<Finding> findings;
@@ -47,6 +48,10 @@ final class StageResult {
 
   /// sha256 of the token file with an empty `checksum` (AX-02).
   final String? computedChecksum;
+
+  /// Contrast summary per group, in group order (VT-02, VR-05); empty when
+  /// the token file could not be read.
+  final List<GroupSummary> groups;
 
   bool get passed => findings.isEmpty;
 
@@ -485,7 +490,7 @@ StageResult runTokensStage({
   report.add(findings.isEmpty
       ? 'Result: PASS'
       : 'Result: FAIL (${failedRulesOf(findings).join(', ')})');
-  return StageResult(findings, report, computed);
+  return StageResult(findings, report, computed, groups: summaries);
 }
 
 /// Distinct rule IDs of [findings] in order.

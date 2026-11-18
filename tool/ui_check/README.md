@@ -1,16 +1,20 @@
 # tool/ui_check — machine checks of the UI constitution
 
-**Owner:** Product/Contracts (Agent 1, AGR-01) · **Tasks:** T-003 (tokens), T-016 (rules) · **Rules:** VR-01, VR-03, VT-01…VT-06, MC-01…MC-17, MC-23, MC-24, TK-08, AX-02, ADR-UI-009.
+**Owner:** Product/Contracts (Agent 1, AGR-01) · **Tasks:** T-003 (tokens), T-016 (rules), T-038 (VR-05 report) · **Rules:** VR-01, VR-03, VR-05, VT-01…VT-06, MC-01…MC-17, MC-23, MC-24, TK-08, AX-02, ADR-UI-009.
 
 ## Commands (run from the repository root)
 ```
 dart run tool/ui_check/ui_check.dart                        # all stages: tokens + rules (VR-01)
+dart run tool/ui_check/ui_check.dart --report=<path>        # same; VR-05 report elsewhere (T-038)
 dart run tool/ui_check/ui_check.dart rules                  # MC rows over lib/ (T-016)
 dart run tool/ui_check/ui_check.dart tokens                 # MVP profile (default)
 dart run tool/ui_check/ui_check.dart tokens --profile=full  # fails while the manifest exempts anything
 dart run tool/ui_check/ui_check.dart gen                    # rewrite lib/design/tokens/design_tokens.g.dart
 ```
 Exit codes: 0 pass, 1 findings, 64 usage error. Output is deterministic (VR-07 ث).
+
+## VR-05 report (T-038)
+The command without a stage argument (`all`) also writes one Markdown report, by default `build/ui_check/report.md` under the root (git-ignored; `--report=<path>` overrides). Sections, in order: **Rules** (every token-stage rule and every covered MC row GREEN or RED with its finding count, VT-04 EXEMPT, VT-05 NOT_COVERED, every uncovered row UNCOVERED with its reason, MC-23), **Contrast pairs per group** (VTG-01…VTG-10, pairs per theme and minima, the 210 total, VT-02/VT-03), **Goldens changed** (GM-06) and **Device profile** (PV-03) — both say they belong to the "test" and "device" stages of VR-02 and are filled by later tasks — and **Findings**. Built by `src/report.dart` as a pure function: no clock, no absolute path, byte-equal over the same tree (VR-07). `tokens`, `rules` and `gen` write no report; exit codes are unchanged and stdout gains one last line naming the report.
 
 ## What the `tokens` stage checks
 | Rule | Check |
@@ -64,10 +68,11 @@ Fixtures (MC-23): `fixtures/<id>.bad.dart.txt` and `<id>.good.dart.txt` per cove
 - `src/manifest.dart` — manifest and catalogues (table 7-0, table 5-1, QT-01).
 - `src/contrast.dart`, `src/sha256.dart` — WCAG ratio and SHA-256 (no dependency, CB-9).
 - `src/rules_stage.dart`, `src/dart_lexer.dart` — the `rules` stage and its lexer (T-016).
+- `src/report.dart` — the VR-05 report (T-038).
 - `fixtures/` — broken and sound sample per covered MC row (MC-23).
 
 ## Tests (VR-07)
 `flutter test test/tool/` — broken fixtures are made in the test from the real token file, one change each, and must fail with their rule ID; the sound file must pass. `test/tool/ui_check_rules_test.dart` does the same for every file in `fixtures/` and tests the lexer.
 
 ## Not yet here
-The uncovered MC rows above, goldens, module matrix and the full VR-05 report arrive with later tasks.
+The uncovered MC rows above, goldens, module matrix and the golden/device sections of the VR-05 report arrive with later tasks.
