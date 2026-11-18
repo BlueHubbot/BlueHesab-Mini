@@ -10,7 +10,6 @@
 import 'package:bluehesab_mini/design/app_motion/src/motion_catalog.dart';
 import 'package:bluehesab_mini/design/app_motion/src/motion_resolve.dart';
 import 'package:flutter/animation.dart';
-import 'package:flutter/scheduler.dart' show TickerProvider;
 import 'package:flutter/widgets.dart' show BuildContext;
 
 /// The values MotionProbe can read (MX-08).
