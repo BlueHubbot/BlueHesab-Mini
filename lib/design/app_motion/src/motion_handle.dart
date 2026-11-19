@@ -156,9 +156,14 @@ final class MotionHandle {
   /// Call it from `didChangeDependencies` with `context.motion.reduced`; it
   /// does nothing when the flag is unchanged. The next play uses the new
   /// RM-02 duration. What runs now (D0, T-040):
-  /// - reduced turned on: a running non-loop jumps to the value it was
-  ///   heading for (end of [forward], start of [reverse]), so MotionProbe
-  ///   counts it 0 and reads the end value (MX-08); a loop that RM-02 stops
+  /// - reduced turned on: a running non-loop whose phase RM-02 makes «آنی»
+  ///   or «ایستا» jumps to the value it was heading for (end of [forward],
+  ///   start of [reverse]), so MotionProbe counts it 0 and reads the end
+  ///   value (MX-08); a running «محو» or «همان» phase goes on from where it
+  ///   is towards the same end with the new RM-02 duration, and the widget
+  ///   re-tracks `dx`/`dy`/`scale` at their end values, so only opacity
+  ///   (or colour) changes and the count is 0 once that change ends
+  ///   (ADVISOR_REPLY-009 Decision A, Action 3); a loop that RM-02 stops
   ///   («ایستا») goes to its start.
   /// - reduced turned off: a running crossfade («محو», «همان») ends as it
   ///   started; a loop asked for with [repeat] starts again (LP-01).
@@ -182,9 +187,19 @@ final class MotionHandle {
       return;
     }
     if (reduced && controller.isAnimating) {
-      controller.value = controller.status == AnimationStatus.reverse
-          ? controller.lowerBound
-          : controller.upperBound;
+      final bool backwards = controller.status == AnimationStatus.reverse;
+      if (_resolved.animates) {
+        // «محو» / «همان»: continue the crossfade from the current value; the
+        // controller scales the new duration by the distance left.
+        if (backwards) {
+          controller.reverse();
+        } else {
+          controller.forward();
+        }
+      } else {
+        controller.value =
+            backwards ? controller.lowerBound : controller.upperBound;
+      }
     }
   }
 

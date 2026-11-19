@@ -1,6 +1,7 @@
 // Tests of `app_motion` slice 3 (T-040): a live MotionHandle follows a
 // change of the RM-01 setting at once, with no restart (RM-01, RM-02,
-// MX-08, LP-01). Reduced «محو» rows follow RM-02 until ESC-009 is answered.
+// MX-08, LP-01). Reduced «محو» rows keep the RM-02 crossfade
+// (ADVISOR_REPLY-009 Decision A).
 
 import 'package:bluehesab_mini/design/app_motion/app_motion.dart';
 import 'package:flutter/widgets.dart';
@@ -91,8 +92,9 @@ const Duration _halfBase = Duration(milliseconds: 120);
 void main() {
   tearDown(() => expect(MotionRegistry.entries, isEmpty));
 
-  testWidgets('setting on mid-run («محو», MO-10 enter): jumps to the end '
-      'value, no movement, next play uses exit (RM-01, RM-02, MX-08)',
+  testWidgets('setting on mid-run («محو», MO-10 enter): no movement at '
+      'once, opacity goes on to the end with exit, count 0 after the change '
+      '(RM-01, RM-02, MX-08 per ADVISOR_REPLY-009 A)',
       (WidgetTester tester) async {
     const Widget w = _Live(id: MotionId.mo10, phase: MotionPhase.enter);
     await tester.pumpWidget(_host(w));
@@ -100,15 +102,26 @@ void main() {
     await tester.pump();
     await tester.pump(_halfBase);
     expect(_probe.activeCount(_all), 1);
-    expect(_probe.value(_leaf, MotionProperty.opacity), inExclusiveRange(0, 1));
+    final double before = _probe.value(_leaf, MotionProperty.opacity);
+    expect(before, inExclusiveRange(0, 1));
     expect(_probe.value(_leaf, MotionProperty.dx), lessThan(0));
 
     await tester.pumpWidget(_host(w, setting: ReducedMotionSetting.on));
+    // «محو»: dx is at its end value at once; only opacity still changes.
+    expect(_probe.value(_leaf, MotionProperty.dx), 0);
+    expect(_probe.value(_leaf, MotionProperty.opacity), before);
+    expect(_probe.activeCount(_all), 1);
+    expect(MotionRegistry.entries.single.controller.duration,
+        MotionToken.exit.duration);
+
+    // The rest of the crossfade takes at most exit (one frame to start the
+    // ticker, then exit, then 1 ms past the end).
+    await tester.pump();
+    await tester.pump(MotionToken.exit.duration);
+    await tester.pump(const Duration(milliseconds: 1));
     expect(_probe.activeCount(_all), 0);
     expect(_probe.value(_leaf, MotionProperty.opacity), 1);
     expect(_probe.value(_leaf, MotionProperty.dx), 0);
-    expect(MotionRegistry.entries.single.controller.duration,
-        MotionToken.exit.duration);
     await tester.pumpWidget(const SizedBox());
   });
 
