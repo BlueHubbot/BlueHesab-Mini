@@ -1,6 +1,7 @@
 // MX-08: MotionHandle (the one way to get a controller for a table 4-3 row
 // phase) and MotionRegistry (debug/test record of every live controller with
-// the BuildContext that built it), T-039.
+// the BuildContext that built it), T-039. Slice 3 (T-040): RM-01 "applies
+// at once, with no restart" for a live handle ([MotionHandle.updateReduced]).
 //
 // MX-03 keeps `AnimationController(` inside `app_motion`; widgets elsewhere
 // ask for a [MotionHandle] and build their transitions on its [animation].
@@ -74,7 +75,14 @@ abstract final class MotionRegistry {
 /// Create it in `didChangeDependencies` (or later) so [reduced] can come
 /// from `context.motion.reduced`, and [dispose] it with the widget.
 final class MotionHandle {
-  MotionHandle._(this.resolved, this.controller, this.animation);
+  MotionHandle._(
+    this.id,
+    this.phase,
+    this._reduced,
+    this._resolved,
+    this.controller,
+    this._curved,
+  );
 
   /// Creates the controller for [phase] of row [id].
   ///
@@ -96,6 +104,9 @@ final class MotionHandle {
     final AnimationController controller =
         AnimationController(vsync: vsync, duration: resolved.duration);
     final MotionHandle handle = MotionHandle._(
+      id,
+      phase,
+      reduced,
       resolved,
       controller,
       CurvedAnimation(parent: controller, curve: curve),
@@ -110,16 +121,87 @@ final class MotionHandle {
     return handle;
   }
 
-  /// What RM-02 allows for this phase.
-  final ResolvedMotion resolved;
+  /// Table 4-3 row.
+  final MotionId id;
+
+  /// Row phase.
+  final MotionPhase phase;
+
+  bool _reduced;
+  ResolvedMotion _resolved;
+
+  /// The reduced flag the handle is resolved for (RM-01).
+  bool get reduced => _reduced;
+
+  /// What RM-02 allows for this phase with [reduced].
+  ResolvedMotion get resolved => _resolved;
 
   /// The controller; driven only through [forward], [reverse] and [repeat].
   final AnimationController controller;
 
-  /// The controller with the phase's curve applied.
-  final Animation<double> animation;
+  final CurvedAnimation _curved;
+
+  /// The controller with the phase's curve applied. RM-02 keeps the phase's
+  /// curve in every case, so [updateReduced] never replaces it.
+  Animation<double> get animation => _curved;
 
   MotionRegistration? _registration;
+
+  /// The last [repeat] request (its `reverse` argument), so a loop can start
+  /// again when reduced motion is turned off; null when no loop was asked.
+  bool? _repeatReverse;
+
+  /// Applies a new RM-01 reduced flag at once, with no restart (RM-01).
+  ///
+  /// Call it from `didChangeDependencies` with `context.motion.reduced`; it
+  /// does nothing when the flag is unchanged. The next play uses the new
+  /// RM-02 duration. What runs now (D0, T-040):
+  /// - reduced turned on: a running non-loop whose phase RM-02 makes «آنی»
+  ///   or «ایستا» jumps to the value it was heading for (end of [forward],
+  ///   start of [reverse]), so MotionProbe counts it 0 and reads the end
+  ///   value (MX-08); a running «محو» or «همان» phase goes on from where it
+  ///   is towards the same end with the new RM-02 duration, and the widget
+  ///   re-tracks `dx`/`dy`/`scale` at their end values, so only opacity
+  ///   (or colour) changes and the count is 0 once that change ends
+  ///   (ADVISOR_REPLY-009 Decision A, Action 3); a loop that RM-02 stops
+  ///   («ایستا») goes to its start.
+  /// - reduced turned off: a running crossfade («محو», «همان») ends as it
+  ///   started; a loop asked for with [repeat] starts again (LP-01).
+  ///
+  /// The widget re-tracks properties whose source depends on
+  /// [ResolvedMotion.movesOrScales] (MX-08).
+  void updateReduced(bool reduced) {
+    if (reduced == _reduced) {
+      return;
+    }
+    _reduced = reduced;
+    _resolved = resolveMotion(id, phase, reduced: reduced);
+    controller.duration = _resolved.duration;
+    final bool? repeatReverse = _repeatReverse;
+    if (repeatReverse != null) {
+      if (_resolved.loops) {
+        controller.repeat(reverse: repeatReverse);
+      } else {
+        controller.value = controller.lowerBound;
+      }
+      return;
+    }
+    if (reduced && controller.isAnimating) {
+      final bool backwards = controller.status == AnimationStatus.reverse;
+      if (_resolved.animates) {
+        // «محو» / «همان»: continue the crossfade from the current value; the
+        // controller scales the new duration by the distance left.
+        if (backwards) {
+          controller.reverse();
+        } else {
+          controller.forward();
+        }
+      } else {
+        controller.value =
+            backwards ? controller.lowerBound : controller.upperBound;
+      }
+    }
+  }
 
   /// Records that [source] drives [property] (MX-08); returns [source].
   Animation<double> track(MotionProperty property, Animation<double> source) {
@@ -133,7 +215,8 @@ final class MotionHandle {
   /// Plays to the end; shows the end state at once when the phase does not
   /// animate (RM-02 instant/still).
   TickerFuture forward() {
-    if (!resolved.animates) {
+    _repeatReverse = null;
+    if (!_resolved.animates) {
       controller.value = controller.upperBound;
       return TickerFuture.complete();
     }
@@ -143,7 +226,8 @@ final class MotionHandle {
   /// Plays back to the start; shows the start state at once when the phase
   /// does not animate.
   TickerFuture reverse() {
-    if (!resolved.animates) {
+    _repeatReverse = null;
+    if (!_resolved.animates) {
       controller.value = controller.lowerBound;
       return TickerFuture.complete();
     }
@@ -153,22 +237,25 @@ final class MotionHandle {
   /// Runs the loop phase (LP-01); with reduced motion (RM-02 still) the
   /// controller stays at the start.
   TickerFuture repeat({bool reverse = false}) {
-    assert(resolved.loops || !resolved.animates,
+    assert(phase == MotionPhase.loop,
         'repeat is only for a loop phase (LP-01)');
-    if (!resolved.loops) {
+    _repeatReverse = reverse;
+    if (!_resolved.loops) {
       controller.value = controller.lowerBound;
       return TickerFuture.complete();
     }
     return controller.repeat(reverse: reverse);
   }
 
-  /// Disposes the controller and leaves the registry.
+  /// Disposes the curved animation and the controller and leaves the
+  /// registry.
   void dispose() {
     final MotionRegistration? registration = _registration;
     if (registration != null) {
       MotionRegistry._entries.remove(registration);
       _registration = null;
     }
+    _curved.dispose();
     controller.dispose();
   }
 }
