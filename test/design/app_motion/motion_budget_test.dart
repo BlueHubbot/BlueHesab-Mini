@@ -54,6 +54,10 @@ class _HostState extends State<_Host> with TickerProviderStateMixin {
 
 const MotionProbe _probe = MotionProbe();
 
+/// A controller is done only after its duration has passed (the simulation
+/// ends at t > duration), so tests pump one millisecond more.
+const Duration _ms = Duration(milliseconds: 1);
+
 Finder get _host => find.byType(_Host);
 
 Future<_HostState> _pumpHost(
@@ -99,7 +103,7 @@ void main() {
     expect(hs[3].controller.value, 0);
     expect(_probe.activeCount(_host), 3);
 
-    await tester.pump(MotionToken.base.duration);
+    await tester.pump(MotionToken.base.duration + _ms);
     expect(_probe.activeCount(_host), 0);
     for (final MotionHandle h in hs.take(3)) {
       expect(h.controller.value, 1);
@@ -138,7 +142,7 @@ void main() {
     expect(_probe.activeCount(_host), 3);
 
     // Ended: after the row's time every place is free again.
-    await tester.pump(MotionToken.base.duration);
+    await tester.pump(MotionToken.base.duration + _ms);
     expect(_probe.activeCount(_host), 0);
     final List<MotionHandle> next = <MotionHandle>[
       for (int i = 0; i < 3; i++) s.make(MotionId.mo11, MotionPhase.enter),
@@ -146,7 +150,7 @@ void main() {
     next.forEach(_play);
     await tester.pump();
     expect(_probe.activeCount(_host), 3);
-    await tester.pump(MotionToken.base.duration);
+    await tester.pump(MotionToken.base.duration + _ms);
   });
 
   testWidgets('MT-08: a running loop (MO-12) takes no place',
@@ -164,7 +168,7 @@ void main() {
     expect(_probe.activeCount(_host), 3);
     expect(hs[3].controller.isAnimating, isFalse);
     expect(hs[3].controller.value, 1);
-    await tester.pump(MotionToken.base.duration);
+    await tester.pump(MotionToken.base.duration + _ms);
     expect(_probe.activeCount(_host), 0);
     expect(_probe.activeLoopCount(_host), 1);
   });
@@ -185,7 +189,7 @@ void main() {
     expect(mo18.controller.isAnimating, isFalse);
     expect(mo18.controller.value, 1);
     expect(_probe.activeCount(_host), 3);
-    await tester.pump(MotionToken.max.duration);
+    await tester.pump(MotionToken.max.duration + _ms);
     expect(_probe.activeCount(_host), 0);
   });
 
@@ -204,7 +208,7 @@ void main() {
     expect(b.controller.isAnimating, isTrue);
     expect(d.controller.isAnimating, isFalse);
     expect(d.controller.value, 1);
-    await tester.pump(MotionToken.max.duration);
+    await tester.pump(MotionToken.max.duration + _ms);
   });
 
   testWidgets('RM-02: «آنی» takes no place; «محو» crossfades count',
@@ -234,7 +238,7 @@ void main() {
     expect(_probe.activeCount(_host), 3);
     expect(fades[3].controller.isAnimating, isFalse);
     expect(fades[3].controller.value, 1);
-    await tester.pump(MotionToken.exit.duration);
+    await tester.pump(MotionToken.exit.duration + _ms);
     expect(_probe.activeCount(_host), 0);
   });
 
@@ -248,7 +252,7 @@ void main() {
     hs.forEach(_play);
     await tester.pump();
     expect(_probe.activeCount(_host), 4);
-    await tester.pump(MotionToken.base.duration);
+    await tester.pump(MotionToken.base.duration + _ms);
     expect(_probe.activeCount(_host), 0);
   });
 }
