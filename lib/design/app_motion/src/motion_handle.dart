@@ -2,6 +2,8 @@
 // phase) and MotionRegistry (debug/test record of every live controller with
 // the BuildContext that built it), T-039. Slice 3 (T-040): RM-01 "applies
 // at once, with no restart" for a live handle ([MotionHandle.updateReduced]).
+// Slice 5 (T-043): MR-03 interruption ([MotionHandle.interrupt],
+// [MotionHandle.from]).
 //
 // MX-03 keeps `AnimationController(` inside `app_motion`; widgets elsewhere
 // ask for a [MotionHandle] and build their transitions on its [animation].
@@ -202,6 +204,26 @@ final class MotionHandle {
       }
     }
   }
+
+  /// MR-03: cuts this row where it is, without a jump to either end, so the
+  /// next row on the same element can continue from the current value
+  /// (MT-07). Works for loops too; does nothing when nothing runs. A later
+  /// [forward], [reverse] or [repeat] plays again (T-043).
+  void interrupt() {
+    _repeatReverse = null;
+    if (controller.isAnimating) {
+      controller.stop(canceled: true);
+    }
+  }
+
+  /// MR-03, MT-07: this row's [animation] mapped from [current] (the value
+  /// the element has at the cut) to [end], so the row starts where the
+  /// previous one was cut and not from its own start. The row keeps its own
+  /// table 4-3 duration and curve (D0, T-043). With RM-02 «آنی» or «ایستا»
+  /// [forward] jumps the controller to its end, so the value is [end] at
+  /// once.
+  Animation<double> from(double current, double end) =>
+      Tween<double>(begin: current, end: end).animate(_curved);
 
   /// Records that [source] drives [property] (MX-08); returns [source].
   Animation<double> track(MotionProperty property, Animation<double> source) {
