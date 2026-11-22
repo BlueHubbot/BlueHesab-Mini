@@ -3,7 +3,9 @@
 // the BuildContext that built it), T-039. Slice 3 (T-040): RM-01 "applies
 // at once, with no restart" for a live handle ([MotionHandle.updateReduced]).
 // Slice 5 (T-043): MR-03 interruption ([MotionHandle.interrupt],
-// [MotionHandle.from]).
+// [MotionHandle.from]). Slice 7 (T-045): the MT-08 page cap
+// ([MotionBudgetScope], [MotionBudget]) and the SV-01 priority order
+// ([forwardInPriorityOrder]).
 //
 // MX-03 keeps `AnimationController(` inside `app_motion`; widgets elsewhere
 // ask for a [MotionHandle] and build their transitions on its [animation].
@@ -13,7 +15,13 @@
 import 'package:bluehesab_mini/design/app_motion/src/motion_catalog.dart';
 import 'package:bluehesab_mini/design/app_motion/src/motion_resolve.dart';
 import 'package:flutter/animation.dart';
-import 'package:flutter/widgets.dart' show BuildContext;
+import 'package:flutter/widgets.dart'
+    show
+        BuildContext,
+        InheritedWidget,
+        State,
+        StatefulWidget,
+        Widget;
 
 /// The values MotionProbe can read (MX-08).
 enum MotionProperty {
@@ -84,6 +92,7 @@ final class MotionHandle {
     this._resolved,
     this.controller,
     this._curved,
+    this._budget,
   );
 
   /// Creates the controller for [phase] of row [id].
@@ -112,7 +121,10 @@ final class MotionHandle {
       resolved,
       controller,
       CurvedAnimation(parent: controller, curve: curve),
+      // MT-08 counts non-loop animations only; loops have LP-04.
+      phase == MotionPhase.loop ? null : MotionBudgetScope.maybeOf(context),
     );
+    handle._budget?._members.add(handle);
     assert(() {
       final MotionRegistration registration =
           MotionRegistration._(context, id, phase, controller);
@@ -148,6 +160,16 @@ final class MotionHandle {
   Animation<double> get animation => _curved;
 
   MotionRegistration? _registration;
+
+  /// The page budget this non-loop handle joined (MT-08), if any.
+  final MotionBudget? _budget;
+
+  /// True while the controller runs and this is not a loop (MT-08).
+  bool get _runsNonLoop => phase != MotionPhase.loop && controller.isAnimating;
+
+  /// MT-08: false when the page already runs its cap of other non-loop
+  /// animations, so this play is done at once (SV-01, D0 T-045).
+  bool get _admitted => _budget?._admits(this) ?? true;
 
   /// The last [repeat] request (its `reverse` argument), so a loop can start
   /// again when reduced motion is turned off; null when no loop was asked.
@@ -235,10 +257,10 @@ final class MotionHandle {
   }
 
   /// Plays to the end; shows the end state at once when the phase does not
-  /// animate (RM-02 instant/still).
+  /// animate (RM-02 instant/still) or the page is at its MT-08 cap.
   TickerFuture forward() {
     _repeatReverse = null;
-    if (!_resolved.animates) {
+    if (!_resolved.animates || !_admitted) {
       controller.value = controller.upperBound;
       return TickerFuture.complete();
     }
@@ -246,10 +268,10 @@ final class MotionHandle {
   }
 
   /// Plays back to the start; shows the start state at once when the phase
-  /// does not animate.
+  /// does not animate or the page is at its MT-08 cap.
   TickerFuture reverse() {
     _repeatReverse = null;
-    if (!_resolved.animates) {
+    if (!_resolved.animates || !_admitted) {
       controller.value = controller.lowerBound;
       return TickerFuture.complete();
     }
@@ -272,6 +294,7 @@ final class MotionHandle {
   /// Disposes the curved animation and the controller and leaves the
   /// registry.
   void dispose() {
+    _budget?._members.remove(this);
     final MotionRegistration? registration = _registration;
     if (registration != null) {
       MotionRegistry._entries.remove(registration);
@@ -279,5 +302,98 @@ final class MotionHandle {
     }
     _curved.dispose();
     controller.dispose();
+  }
+}
+
+/// MT-08: "at most three non-loop animations run at once on each page; each
+/// `CustomPainter` counts as one" (one [MotionHandle] per painter).
+const int motionPageCap = 3;
+
+/// SV-01: who gets a place first when the third row of the success sequence
+/// starts together (MO-14 ← MO-15 ← MO-11 ← MO-18).
+const List<MotionId> sv01Priority = <MotionId>[
+  MotionId.mo14,
+  MotionId.mo15,
+  MotionId.mo11,
+  MotionId.mo18,
+];
+
+/// The MT-08 count of one page. Only [MotionHandle] joins it; it lives in a
+/// [MotionBudgetScope].
+final class MotionBudget {
+  MotionBudget._();
+
+  final Set<MotionHandle> _members = <MotionHandle>{};
+
+  /// Non-loop animations of this page running now (MT-08).
+  int get running =>
+      _members.where((MotionHandle h) => h._runsNonLoop).length;
+
+  /// A handle already running keeps its place (MR-03 continues it); a new
+  /// play gets one only below [motionPageCap]. The count is read from the
+  /// controllers, so a finished, cut, «آنی» or disposed row frees its place
+  /// at once.
+  bool _admits(MotionHandle handle) =>
+      handle._runsNonLoop ||
+      _members
+              .where((MotionHandle h) => !identical(h, handle) && h._runsNonLoop)
+              .length <
+          motionPageCap;
+}
+
+/// One MT-08 budget for the page under it (T-045). Page shells put it at the
+/// page root; a [MotionHandle] built outside any scope is not capped.
+class MotionBudgetScope extends StatefulWidget {
+  /// Creates the scope.
+  const MotionBudgetScope({super.key, required this.child});
+
+  /// The page.
+  final Widget child;
+
+  /// The budget of the nearest scope, or `null` without one. Reading it does
+  /// not make [context] depend on the scope (the budget never changes).
+  static MotionBudget? maybeOf(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<_MotionBudgetMarker>()?.budget;
+
+  @override
+  State<MotionBudgetScope> createState() => _MotionBudgetScopeState();
+}
+
+class _MotionBudgetScopeState extends State<MotionBudgetScope> {
+  final MotionBudget _budget = MotionBudget._();
+
+  @override
+  Widget build(BuildContext context) =>
+      _MotionBudgetMarker(budget: _budget, child: widget.child);
+}
+
+class _MotionBudgetMarker extends InheritedWidget {
+  const _MotionBudgetMarker({required this.budget, required super.child});
+
+  final MotionBudget budget;
+
+  @override
+  bool updateShouldNotify(_MotionBudgetMarker oldWidget) =>
+      !identical(oldWidget.budget, budget);
+}
+
+/// SV-01: plays [handles] that start in the same frame in the order of
+/// [sv01Priority]; rows not in SV-01 follow in the given order. With a page
+/// budget the lowest-priority rows are the ones done at once (MT-08).
+void forwardInPriorityOrder(Iterable<MotionHandle> handles) {
+  int rank(MotionHandle h) {
+    final int i = sv01Priority.indexOf(h.id);
+    return i < 0 ? sv01Priority.length : i;
+  }
+
+  final List<MotionHandle> given = handles.toList();
+  final List<MotionHandle> ordered = List<MotionHandle>.of(given)
+    ..sort((MotionHandle a, MotionHandle b) {
+      final int byRank = rank(a).compareTo(rank(b));
+      // List.sort is not stable; keep the given order inside one rank.
+      return byRank != 0 ? byRank : given.indexOf(a).compareTo(given.indexOf(b));
+    });
+  for (final MotionHandle h in ordered) {
+    h.forward();
   }
 }
