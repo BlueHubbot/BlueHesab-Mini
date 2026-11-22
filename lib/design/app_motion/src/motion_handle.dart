@@ -5,7 +5,8 @@
 // Slice 5 (T-043): MR-03 interruption ([MotionHandle.interrupt],
 // [MotionHandle.from]). Slice 7 (T-045): the MT-08 page cap
 // ([MotionBudgetScope], [MotionBudget]) and the SV-01 priority order
-// ([forwardInPriorityOrder]).
+// ([forwardInPriorityOrder]). Slice 9 (T-047): the LP-04 cap of two loops
+// in view, counted in the same page budget apart from MT-08.
 //
 // MX-03 keeps `AnimationController(` inside `app_motion`; widgets elsewhere
 // ask for a [MotionHandle] and build their transitions on its [animation].
@@ -121,8 +122,8 @@ final class MotionHandle {
       resolved,
       controller,
       CurvedAnimation(parent: controller, curve: curve),
-      // MT-08 counts non-loop animations only; loops have LP-04.
-      phase == MotionPhase.loop ? null : MotionBudgetScope.maybeOf(context),
+      // MT-08 counts non-loop animations, LP-04 loops; both in one budget.
+      MotionBudgetScope.maybeOf(context),
     );
     handle._budget?._members.add(handle);
     assert(() {
@@ -161,15 +162,27 @@ final class MotionHandle {
 
   MotionRegistration? _registration;
 
-  /// The page budget this non-loop handle joined (MT-08), if any.
+  /// The page budget this handle joined (MT-08, LP-04), if any.
   final MotionBudget? _budget;
 
   /// True while the controller runs and this is not a loop (MT-08).
   bool get _runsNonLoop => phase != MotionPhase.loop && controller.isAnimating;
 
+  /// True while the controller runs and this is a loop (LP-04).
+  bool get _runsLoop => phase == MotionPhase.loop && controller.isAnimating;
+
+  /// True for a loop asked for with [repeat] that RM-02 lets run but that
+  /// does not run now: it waits for a place under LP-04 (T-047).
+  bool get _waitsForPlace =>
+      _repeatReverse != null && _resolved.loops && !controller.isAnimating;
+
   /// MT-08: false when the page already runs its cap of other non-loop
   /// animations, so this play is done at once (SV-01, D0 T-045).
   bool get _admitted => _budget?._admits(this) ?? true;
+
+  /// LP-04: false when the page already runs its cap of other loops, so
+  /// this loop waits still at its start (RM-02 «ایستا» look, D0 T-047).
+  bool get _loopAdmitted => _budget?._admitsLoop(this) ?? true;
 
   /// The last [repeat] request (its `reverse` argument), so a loop can start
   /// again when reduced motion is turned off; null when no loop was asked.
@@ -203,10 +216,12 @@ final class MotionHandle {
     controller.duration = _resolved.duration;
     final bool? repeatReverse = _repeatReverse;
     if (repeatReverse != null) {
-      if (_resolved.loops) {
+      if (_resolved.loops && _loopAdmitted) {
         controller.repeat(reverse: repeatReverse);
       } else {
         controller.value = controller.lowerBound;
+        // A loop made still frees its LP-04 place (T-047).
+        _budget?._startWaitingLoops();
       }
       return;
     }
@@ -235,6 +250,10 @@ final class MotionHandle {
     _repeatReverse = null;
     if (controller.isAnimating) {
       controller.stop(canceled: true);
+      if (isLoop) {
+        // LP-04: the place this loop held goes to a waiting loop (T-047).
+        _budget?._startWaitingLoops();
+      }
     }
   }
 
@@ -279,12 +298,14 @@ final class MotionHandle {
   }
 
   /// Runs the loop phase (LP-01); with reduced motion (RM-02 still) the
-  /// controller stays at the start.
+  /// controller stays at the start. When the page already runs two other
+  /// loops (LP-04) it also stays at the start and starts by itself once a
+  /// place frees (T-047).
   TickerFuture repeat({bool reverse = false}) {
     assert(phase == MotionPhase.loop,
         'repeat is only for a loop phase (LP-01)');
     _repeatReverse = reverse;
-    if (!_resolved.loops) {
+    if (!_resolved.loops || !_loopAdmitted) {
       controller.value = controller.lowerBound;
       return TickerFuture.complete();
     }
@@ -294,7 +315,13 @@ final class MotionHandle {
   /// Disposes the curved animation and the controller and leaves the
   /// registry.
   void dispose() {
-    _budget?._members.remove(this);
+    final MotionBudget? budget = _budget;
+    final bool heldLoopPlace = _runsLoop;
+    _repeatReverse = null;
+    budget?._members.remove(this);
+    if (heldLoopPlace) {
+      budget?._startWaitingLoops();
+    }
     final MotionRegistration? registration = _registration;
     if (registration != null) {
       MotionRegistry._entries.remove(registration);
@@ -309,6 +336,10 @@ final class MotionHandle {
 /// `CustomPainter` counts as one" (one [MotionHandle] per painter).
 const int motionPageCap = 3;
 
+/// LP-04: "at any moment at most two loops are in view" (one
+/// `MotionLoopGroup` owns one handle, so a group counts as one loop).
+const int motionLoopCap = 2;
+
 /// SV-01: who gets a place first when the third row of the success sequence
 /// starts together (MO-14 ← MO-15 ← MO-11 ← MO-18).
 const List<MotionId> sv01Priority = <MotionId>[
@@ -318,8 +349,8 @@ const List<MotionId> sv01Priority = <MotionId>[
   MotionId.mo18,
 ];
 
-/// The MT-08 count of one page. Only [MotionHandle] joins it; it lives in a
-/// [MotionBudgetScope].
+/// The MT-08 and LP-04 counts of one page. Only [MotionHandle] joins it; it
+/// lives in a [MotionBudgetScope].
 final class MotionBudget {
   MotionBudget._();
 
@@ -339,6 +370,38 @@ final class MotionBudget {
               .where((MotionHandle h) => !identical(h, handle) && h._runsNonLoop)
               .length <
           motionPageCap;
+
+  /// Loops of this page running now (LP-04).
+  int get runningLoops =>
+      _members.where((MotionHandle h) => h._runsLoop).length;
+
+  /// Loops of this page asked for with `repeat` that wait for a place.
+  int get waitingLoops =>
+      _members.where((MotionHandle h) => h._waitsForPlace).length;
+
+  /// LP-04: a running loop keeps its place; a new one gets one only below
+  /// [motionLoopCap].
+  bool _admitsLoop(MotionHandle handle) =>
+      handle._runsLoop ||
+      _members
+              .where((MotionHandle h) => !identical(h, handle) && h._runsLoop)
+              .length <
+          motionLoopCap;
+
+  /// LP-04, LP-02: a waiting loop still has its real state behind it, so it
+  /// starts as soon as a place frees; the oldest member (the handle built
+  /// first) starts first, since members keep the order they joined in
+  /// (D0 T-047).
+  void _startWaitingLoops() {
+    for (final MotionHandle h in _members.toList()) {
+      if (runningLoops >= motionLoopCap) {
+        return;
+      }
+      if (h._waitsForPlace) {
+        h.controller.repeat(reverse: h._repeatReverse!);
+      }
+    }
+  }
 }
 
 /// One MT-08 budget for the page under it (T-045). Page shells put it at the
