@@ -250,7 +250,7 @@ final class MotionHandle {
     _repeatReverse = null;
     if (controller.isAnimating) {
       controller.stop(canceled: true);
-      if (isLoop) {
+      if (phase == MotionPhase.loop) {
         // LP-04: the place this loop held goes to a waiting loop (T-047).
         _budget?._startWaitingLoops();
       }
