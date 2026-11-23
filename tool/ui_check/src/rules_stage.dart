@@ -1,6 +1,6 @@
 // The `rules` stage of ui_check (T-016): the pattern rows of table 11-2-a
-// (MC-01…MC-17) and the hidden-exemption scan (VR-03), over `lib/` only
-// (MC-24). One line per violation with rule ID, file and line (VR-01).
+// (MC-01…MC-17; MC-06 since T-048) and the hidden-exemption scan (VR-03),
+// over `lib/` only (MC-24). One line per violation with rule ID, file and line (VR-01).
 //
 // Pure function over file contents so the tool tests (VR-07, MC-23) can feed
 // fixtures. Code patterns run on the lexer's `code` view (comments and string
@@ -59,6 +59,7 @@ const List<String> coveredRules = <String>[
   'MC-01',
   'MC-03',
   'MC-05',
+  'MC-06',
   'MC-07',
   'MC-08',
   'MC-09',
@@ -76,8 +77,6 @@ const List<String> coveredRules = <String>[
 const List<UncoveredRow> uncoveredRows = <UncoveredRow>[
   UncoveredRow('MC-04',
       'needs the component catalogue (table 7-0) and golden review by Agent 1'),
-  UncoveredRow('MC-06',
-      'lint row: needs static types (package:analyzer has no audit row yet)'),
   UncoveredRow('MC-12',
       'needs the AppDivider and CM-12 frame files (component tasks)'),
   UncoveredRow('MC-18',
@@ -207,6 +206,29 @@ final List<RegExp> _mc05 = <RegExp>[
   _re(r'(?:Linear|Radial|Sweep)Gradient\('),
 ];
 
+/// MC-06 (TK-13): calls whose every argument is checked for a raw number.
+final List<RegExp> _mc06AllArgs = <RegExp>[
+  _re(r'EdgeInsets(?:Directional)?\s*\.\s*[A-Za-z_]\w*\s*\('),
+  _re(r'(?:BorderRadius|Radius)\s*\.\s*circular\s*\('),
+];
+
+/// MC-06: `SizedBox(`, where only `width:` and `height:` are checked.
+final RegExp _mc06SizedBox = _re(r'SizedBox\s*\(');
+final RegExp _mc06SizedBoxArg = RegExp(r'^\s*(?:width|height)\s*:');
+
+/// MC-06: a numeric literal (decimal, double, exponent, hex, separators).
+final RegExp _mc06Number = RegExp(
+    r'(?<![A-Za-z0-9_$.])(?:0[xX][0-9A-Fa-f][0-9A-Fa-f_]*|(?:\d[\d_]*(?:\.\d[\d_]*)?|\.\d[\d_]*)(?:[eE][+-]?\d[\d_]*)?)(?![A-Za-z0-9_$])');
+
+/// True when the literal [text] is zero in any form (`0`, `0.0`, `0x0`).
+bool _isZeroLiteral(String text) {
+  final String t = text.replaceAll('_', '');
+  final num? v = (t.startsWith('0x') || t.startsWith('0X'))
+      ? int.tryParse(t.substring(2), radix: 16)
+      : num.tryParse(t);
+  return v != null && v == 0;
+}
+
 final List<RegExp> _mc08Code = <RegExp>[
   _re(r'Duration\(\s*milliseconds\s*:'),
   _re(r'Curves\s*\.'),
@@ -307,6 +329,27 @@ String _topLevel(String inner) {
   return b.toString();
 }
 
+/// The top-level arguments of a call: (start offset in the call's inner
+/// text, argument text), split at commas outside nested brackets.
+List<(int, String)> _arguments(String inner) {
+  final List<(int, String)> args = <(int, String)>[];
+  int depth = 0;
+  int start = 0;
+  for (int i = 0; i < inner.length; i++) {
+    final String c = inner[i];
+    if (c == '(' || c == '[' || c == '{') {
+      depth++;
+    } else if (c == ')' || c == ']' || c == '}') {
+      depth--;
+    } else if (c == ',' && depth == 0) {
+      args.add((start, inner.substring(start, i)));
+      start = i + 1;
+    }
+  }
+  args.add((start, inner.substring(start)));
+  return args;
+}
+
 /// Checks one file; [path] is repository-relative with `/`.
 List<RuleHit> checkFile(String path, String source) {
   final Lexed lx = Lexed(source);
@@ -375,6 +418,40 @@ List<RuleHit> checkFile(String path, String source) {
   if (!_isGenerated(path)) {
     codeRule('MC-05', _mc05, 'outside $generatedPath (TK-10, TK-12)');
   }
+
+  // MC-06 (TK-13): no raw number other than 0 in spacing and radius calls;
+  // allowed in: nowhere (an intermediate value only with an ADR). Every
+  // argument of EdgeInsets/EdgeInsetsDirectional/BorderRadius.circular/
+  // Radius.circular, and `width:`/`height:` of SizedBox; a literal at any
+  // depth inside a checked argument counts (D0 T-048).
+  void mc06(RegExp opener, bool Function(String arg) checked) {
+    for (final RegExpMatch m in opener.allMatches(code)) {
+      final int open = code.lastIndexOf('(', m.end - 1);
+      final int close = _closeParen(code, open);
+      final int innerStart = open + 1;
+      final String inner = close < 0
+          ? code.substring(innerStart)
+          : code.substring(innerStart, close - 1);
+      final String call = m[0]!.replaceAll(RegExp(r'[\s(]'), '');
+      for (final (int at, String arg) in _arguments(inner)) {
+        if (!checked(arg)) {
+          continue;
+        }
+        for (final RegExpMatch n in _mc06Number.allMatches(arg)) {
+          if (_isZeroLiteral(n[0]!)) {
+            continue;
+          }
+          hit('MC-06', lx.lineOf(innerStart + at + n.start),
+              'raw number `${n[0]}` in `$call(` (TK-13: spacing and radius only from tokens)');
+        }
+      }
+    }
+  }
+
+  for (final RegExp opener in _mc06AllArgs) {
+    mc06(opener, (String _) => true);
+  }
+  mc06(_mc06SizedBox, _mc06SizedBoxArg.hasMatch);
 
   // MC-07 (TY-02): TextStyle( with fontSize:.
   if (!_isGenerated(path)) {
