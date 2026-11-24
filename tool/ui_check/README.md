@@ -40,6 +40,7 @@ Only `lib/**.dart` (MC-24). A small lexer (`src/dart_lexer.dart`) blanks comment
 | MC-01 | `Color(0x`, `Colors.`/`CupertinoColors.`, `Color.fromRGBO/ARGB`, 6/8-digit `0x` numbers, `#RRGGBB(AA)` in strings | `lib/design/tokens/design_tokens.g.dart`; plus `lib/design/tokens/theme_derivation.dart` and `contrast_guard.dart` (SE-14), which still fail on `Color(`, `Colors.`, `Color.from…` and any `package:flutter/` import |
 | MC-03 | `.colorScheme`, `Theme.of(…).…Color` | nothing yet: the ThemeData file is named by ADR-UI-007 |
 | MC-05 | `BoxShadow(`, `Shadow(`, `elevation:`, `BackdropFilter(`, `ImageFilter.blur`, `Linear/Radial/SweepGradient(` | the generated token file |
+| MC-06 | a numeric literal other than zero (`0`, `0.0`, `0x0` pass) anywhere inside any argument of `EdgeInsets.<ctor>(`, `EdgeInsetsDirectional.<ctor>(`, `BorderRadius.circular(`, `Radius.circular(`, or inside the top-level `width:`/`height:` argument of `SizedBox(` (T-048; a named constant is not seen without static types) | nowhere (an intermediate value only with an ADR, TK-13) |
 | MC-07 | `TextStyle(` with a top-level `fontSize:` | the generated token file (type roles) |
 | MC-08 | `Duration(milliseconds:`, `Curves.`, `AnimationController(`, `AnimatedContainer/Size/Positioned(`, `TweenAnimationBuilder(`, `Hero(`, `Lottie…`, `Rive…`, `package:lottie/` and `package:rive/` imports | any path with a segment `app_motion/` (D0: location not chosen yet); plus the generated token file (SE-14) |
 | MC-09 | `Platform.is…`, `Platform.operatingSystem`, `defaultTargetPlatform` | `platform_adapter*.dart` or a `platform_adapter/` folder |
@@ -54,7 +55,7 @@ Only `lib/**.dart` (MC-24). A small lexer (`src/dart_lexer.dart`) blanks comment
 
 File names for files that do not exist yet are the narrowest reading of the column; each list is one constant in `src/rules_stage.dart`, changed only with Agent 1 approval (VR-03).
 
-Not covered (printed as `UNCOVERED`; `--profile=full` fails, MC-23): MC-04, MC-12 (component files and golden review), MC-06, MC-18, MC-19 (lint rows: need `package:analyzer`, no audit row yet), MC-20 (no chart library, ADR-UI-006), MC-21 (copy catalog), MC-22 (Style Guide). MC-02 is in the `tokens` stage.
+Not covered (printed as `UNCOVERED`; `--profile=full` fails, MC-23): MC-04, MC-12 (component files and golden review), MC-18, MC-19 (lint rows: need the static money type and `package:analyzer`, no audit row yet), MC-20 (no chart library, ADR-UI-006), MC-21 (copy catalog), MC-22 (Style Guide). MC-02 is in the `tokens` stage.
 
 Known result on `main`: after SE-14 (ESC-003 → ADVISOR_REPLY-003) amended the MC-01 and MC-08 "allowed in" cells, `rules` is clean on `lib/` (the tool test asserts it, exit 0), so the stage can become a blocking CI step (VR-02; Builder-Platform, ADVISOR_REPLY-003 Action 4).
 

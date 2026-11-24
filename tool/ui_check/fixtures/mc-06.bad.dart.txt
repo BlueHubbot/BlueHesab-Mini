@@ -1,0 +1,5 @@
+// fixture-path: lib/ui/summary_tile.dart
+Widget tile(Widget child) => Padding(
+      padding: const EdgeInsets.all(10),
+      child: SizedBox(height: 10, child: child),
+    );

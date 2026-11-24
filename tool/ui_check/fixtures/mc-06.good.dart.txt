@@ -1,0 +1,14 @@
+// fixture-path: lib/ui/summary_tile.dart
+// A gap of 10 is written here only in a comment.
+Widget tile(Widget child, AppSpace space) => Padding(
+      padding: EdgeInsetsDirectional.only(start: space.s4, top: 0),
+      child: SizedBox(
+        key: const ValueKey<int>(3),
+        width: space.s2,
+        height: 0.0,
+        child: Text('10 items', semanticsLabel: label(12)),
+      ),
+    );
+BorderRadius corner(AppRadius r) => BorderRadius.circular(r.md);
+Radius none() => Radius.circular(0x0);
+Widget square(Widget child) => SizedBox.square(dimension: 24, child: child);
