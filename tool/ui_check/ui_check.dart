@@ -10,13 +10,16 @@
 //   dart run tool/ui_check/ui_check.dart tokens [--profile=mvp|full]
 //   dart run tool/ui_check/ui_check.dart rules [--profile=mvp|full]
 //   dart run tool/ui_check/ui_check.dart gen      # rewrite the .g.dart file
-// Options: --root=<dir> (default: current directory).
+// Options: --root=<dir> (default: current directory); --report=<path>
+// (default: build/ui_check/report.md under the root). Only the command
+// without a stage argument (`all`) writes the VR-05 report file (T-038).
 // Exit codes: 0 pass, 1 findings, 64 usage error.
 
 import 'dart:io';
 
 import 'src/generator.dart';
 import 'src/manifest.dart';
+import 'src/report.dart';
 import 'src/rules_stage.dart';
 import 'src/tokens_stage.dart';
 
@@ -25,7 +28,7 @@ const String tokensPath = 'design/tokens/design_tokens.json';
 
 const String _usage =
     'usage: dart run tool/ui_check/ui_check.dart [all|tokens|rules|gen] '
-    '[--profile=mvp|full] [--root=<dir>]';
+    '[--profile=mvp|full] [--root=<dir>] [--report=<path>]';
 
 void main(List<String> args) {
   exitCode = runCli(args, stdout, stderr);
@@ -36,6 +39,7 @@ int runCli(List<String> args, StringSink out, StringSink err) {
   String command = 'all';
   Profile profile = Profile.mvp;
   String root = '.';
+  String? reportPath;
   for (final String a in args) {
     if (a.startsWith('--profile=')) {
       final Profile? p = parseProfile(a.substring('--profile='.length));
@@ -44,6 +48,8 @@ int runCli(List<String> args, StringSink out, StringSink err) {
         return 64;
       }
       profile = p;
+    } else if (a.startsWith('--report=') && a.length > '--report='.length) {
+      reportPath = a.substring('--report='.length);
     } else if (a.startsWith('--root=')) {
       root = a.substring('--root='.length);
     } else if (a == 'all' || a == 'tokens' || a == 'rules' || a == 'gen') {
@@ -55,7 +61,7 @@ int runCli(List<String> args, StringSink out, StringSink err) {
   }
 
   if (command == 'rules') {
-    return _runRules(root, profile, out);
+    return _runRules(root, profile, out).passed ? 0 : 1;
   }
 
   final File json = File('$root/$tokensPath');
@@ -91,15 +97,21 @@ int runCli(List<String> args, StringSink out, StringSink err) {
     out.writeln(line);
   }
   if (command == 'all') {
-    final int rules = _runRules(root, profile, out);
-    return result.passed && rules == 0 ? 0 : 1;
+    final RulesResult rules = _runRules(root, profile, out);
+    final String path = reportPath ?? '$root/$defaultReportPath';
+    File(path)
+      ..createSync(recursive: true)
+      ..writeAsStringSync(
+          buildReport(tokens: result, rules: rules, profile: profile));
+    out.writeln('report (VR-05): ${reportPath ?? defaultReportPath}');
+    return result.passed && rules.passed ? 0 : 1;
   }
   return result.passed ? 0 : 1;
 }
 
 /// Reads every `.dart` file under `<root>/lib` (MC-24) and runs the rules
-/// stage; returns the exit code.
-int _runRules(String root, Profile profile, StringSink out) {
+/// stage; returns its result.
+RulesResult _runRules(String root, Profile profile, StringSink out) {
   final Map<String, String> files = <String, String>{};
   final Directory lib = Directory('$root/lib');
   if (lib.existsSync()) {
@@ -115,5 +127,5 @@ int _runRules(String root, Profile profile, StringSink out) {
   for (final String line in result.report) {
     out.writeln(line);
   }
-  return result.passed ? 0 : 1;
+  return result;
 }

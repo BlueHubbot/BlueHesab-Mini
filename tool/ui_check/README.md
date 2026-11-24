@@ -1,16 +1,20 @@
 # tool/ui_check — machine checks of the UI constitution
 
-**Owner:** Product/Contracts (Agent 1, AGR-01) · **Tasks:** T-003 (tokens), T-016 (rules) · **Rules:** VR-01, VR-03, VT-01…VT-06, MC-01…MC-17, MC-23, MC-24, TK-08, AX-02, ADR-UI-009.
+**Owner:** Product/Contracts (Agent 1, AGR-01) · **Tasks:** T-003 (tokens), T-016 (rules), T-038 (VR-05 report) · **Rules:** VR-01, VR-03, VR-05, VT-01…VT-06, MC-01…MC-17, MC-23, MC-24, TK-08, AX-02, ADR-UI-009.
 
 ## Commands (run from the repository root)
 ```
 dart run tool/ui_check/ui_check.dart                        # all stages: tokens + rules (VR-01)
+dart run tool/ui_check/ui_check.dart --report=<path>        # same; VR-05 report elsewhere (T-038)
 dart run tool/ui_check/ui_check.dart rules                  # MC rows over lib/ (T-016)
 dart run tool/ui_check/ui_check.dart tokens                 # MVP profile (default)
 dart run tool/ui_check/ui_check.dart tokens --profile=full  # fails while the manifest exempts anything
 dart run tool/ui_check/ui_check.dart gen                    # rewrite lib/design/tokens/design_tokens.g.dart
 ```
 Exit codes: 0 pass, 1 findings, 64 usage error. Output is deterministic (VR-07 ث).
+
+## VR-05 report (T-038)
+The command without a stage argument (`all`) also writes one Markdown report, by default `build/ui_check/report.md` under the root (git-ignored; `--report=<path>` overrides). Sections, in order: **Rules** (every token-stage rule and every covered MC row GREEN or RED with its finding count, VT-04 EXEMPT, VT-05 NOT_COVERED, every uncovered row UNCOVERED with its reason, MC-23), **Contrast pairs per group** (VTG-01…VTG-10, pairs per theme and minima, the 210 total, VT-02/VT-03), **Goldens changed** (GM-06) and **Device profile** (PV-03) — both say they belong to the "test" and "device" stages of VR-02 and are filled by later tasks — and **Findings**. Built by `src/report.dart` as a pure function: no clock, no absolute path, byte-equal over the same tree (VR-07). `tokens`, `rules` and `gen` write no report; exit codes are unchanged and stdout gains one last line naming the report.
 
 ## What the `tokens` stage checks
 | Rule | Check |
@@ -36,6 +40,7 @@ Only `lib/**.dart` (MC-24). A small lexer (`src/dart_lexer.dart`) blanks comment
 | MC-01 | `Color(0x`, `Colors.`/`CupertinoColors.`, `Color.fromRGBO/ARGB`, 6/8-digit `0x` numbers, `#RRGGBB(AA)` in strings | `lib/design/tokens/design_tokens.g.dart`; plus `lib/design/tokens/theme_derivation.dart` and `contrast_guard.dart` (SE-14), which still fail on `Color(`, `Colors.`, `Color.from…` and any `package:flutter/` import |
 | MC-03 | `.colorScheme`, `Theme.of(…).…Color` | nothing yet: the ThemeData file is named by ADR-UI-007 |
 | MC-05 | `BoxShadow(`, `Shadow(`, `elevation:`, `BackdropFilter(`, `ImageFilter.blur`, `Linear/Radial/SweepGradient(` | the generated token file |
+| MC-06 | a numeric literal other than zero (`0`, `0.0`, `0x0` pass) anywhere inside any argument of `EdgeInsets.<ctor>(`, `EdgeInsetsDirectional.<ctor>(`, `BorderRadius.circular(`, `Radius.circular(`, or inside the top-level `width:`/`height:` argument of `SizedBox(` (T-048; a named constant is not seen without static types) | nowhere (an intermediate value only with an ADR, TK-13) |
 | MC-07 | `TextStyle(` with a top-level `fontSize:` | the generated token file (type roles) |
 | MC-08 | `Duration(milliseconds:`, `Curves.`, `AnimationController(`, `AnimatedContainer/Size/Positioned(`, `TweenAnimationBuilder(`, `Hero(`, `Lottie…`, `Rive…`, `package:lottie/` and `package:rive/` imports | any path with a segment `app_motion/` (D0: location not chosen yet); plus the generated token file (SE-14) |
 | MC-09 | `Platform.is…`, `Platform.operatingSystem`, `defaultTargetPlatform` | `platform_adapter*.dart` or a `platform_adapter/` folder |
@@ -50,7 +55,7 @@ Only `lib/**.dart` (MC-24). A small lexer (`src/dart_lexer.dart`) blanks comment
 
 File names for files that do not exist yet are the narrowest reading of the column; each list is one constant in `src/rules_stage.dart`, changed only with Agent 1 approval (VR-03).
 
-Not covered (printed as `UNCOVERED`; `--profile=full` fails, MC-23): MC-04, MC-12 (component files and golden review), MC-06, MC-18, MC-19 (lint rows: need `package:analyzer`, no audit row yet), MC-20 (no chart library, ADR-UI-006), MC-21 (copy catalog), MC-22 (Style Guide). MC-02 is in the `tokens` stage.
+Not covered (printed as `UNCOVERED`; `--profile=full` fails, MC-23): MC-04, MC-12 (component files and golden review), MC-18, MC-19 (lint rows: need the static money type and `package:analyzer`, no audit row yet), MC-20 (no chart library, ADR-UI-006), MC-21 (copy catalog), MC-22 (Style Guide). MC-02 is in the `tokens` stage.
 
 Known result on `main`: after SE-14 (ESC-003 → ADVISOR_REPLY-003) amended the MC-01 and MC-08 "allowed in" cells, `rules` is clean on `lib/` (the tool test asserts it, exit 0), so the stage can become a blocking CI step (VR-02; Builder-Platform, ADVISOR_REPLY-003 Action 4).
 
@@ -64,10 +69,11 @@ Fixtures (MC-23): `fixtures/<id>.bad.dart.txt` and `<id>.good.dart.txt` per cove
 - `src/manifest.dart` — manifest and catalogues (table 7-0, table 5-1, QT-01).
 - `src/contrast.dart`, `src/sha256.dart` — WCAG ratio and SHA-256 (no dependency, CB-9).
 - `src/rules_stage.dart`, `src/dart_lexer.dart` — the `rules` stage and its lexer (T-016).
+- `src/report.dart` — the VR-05 report (T-038).
 - `fixtures/` — broken and sound sample per covered MC row (MC-23).
 
 ## Tests (VR-07)
 `flutter test test/tool/` — broken fixtures are made in the test from the real token file, one change each, and must fail with their rule ID; the sound file must pass. `test/tool/ui_check_rules_test.dart` does the same for every file in `fixtures/` and tests the lexer.
 
 ## Not yet here
-The uncovered MC rows above, goldens, module matrix and the full VR-05 report arrive with later tasks.
+The uncovered MC rows above, goldens, module matrix and the golden/device sections of the VR-05 report arrive with later tasks.
