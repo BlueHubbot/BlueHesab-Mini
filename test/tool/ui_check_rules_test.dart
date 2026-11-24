@@ -323,6 +323,80 @@ void main() {
     });
   });
 
+  group('MC-06 raw numbers in spacing and radius calls (T-048, TK-13)', () {
+    List<RuleHit> mc06(String src, {String path = 'lib/ui/a.dart'}) =>
+        checkFile(path, src).where((RuleHit h) => h.rule == 'MC-06').toList();
+
+    test('every listed opener is caught, at the literal line', () {
+      const String src = 'final a = EdgeInsets.all(8);\n'
+          'final b = EdgeInsets.symmetric(horizontal: 12, vertical: 0);\n'
+          'final c = EdgeInsets.only(top: 4);\n'
+          'final d = EdgeInsets.fromLTRB(0, 0, 0, 2);\n'
+          'final e = EdgeInsetsDirectional.only(start: 16);\n'
+          'final f = EdgeInsetsDirectional.fromSTEB(0, 1, 0, 0);\n'
+          'final g = BorderRadius.circular(6);\n'
+          'final h = Radius.circular(3);\n'
+          'final i = SizedBox(width: 10);\n'
+          'final j = SizedBox(height: 10);\n';
+      expect(mc06(src).map((RuleHit h) => h.line).toList(),
+          <int>[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+      expect(mc06(src).first.message, contains('`8`'));
+      expect(mc06(src).first.message, contains('EdgeInsets.all('));
+    });
+
+    test('doubles, hex, exponent, separators and negatives count', () {
+      for (final String v in <String>['1.5', '.5', '0x10', '1e1', '1_0', '-4']) {
+        expect(mc06('final p = EdgeInsets.all($v);\n'), hasLength(1),
+            reason: v);
+      }
+    });
+
+    test('zero in every form passes; names and strings are not numbers', () {
+      for (final String v in <String>['0', '0.0', '0x0', '-0', '0e0', '.0']) {
+        expect(mc06('final p = EdgeInsets.all($v);\n'), isEmpty, reason: v);
+      }
+      expect(mc06('final p = EdgeInsets.all(space.s2);\n'), isEmpty);
+      expect(mc06("final p = SizedBox(width: w('8'));\n"), isEmpty);
+      expect(mc06('final p = EdgeInsets.all(x); // 8\n'), isEmpty);
+    });
+
+    test('a literal anywhere inside a checked argument counts (D0)', () {
+      expect(mc06('final p = EdgeInsets.all(space.s4 * 2);\n'), hasLength(1));
+      expect(mc06('final p = SizedBox(width: f(g, 8));\n'), hasLength(1));
+      const String multi = 'final p = EdgeInsets.only(\n'
+          '  top: space.s1,\n'
+          '  bottom: 6,\n'
+          ');\n';
+      expect(mc06(multi).single.line, 3);
+    });
+
+    test('SizedBox: only width and height; nested calls keep their opener', () {
+      expect(
+          mc06('final p = SizedBox(key: ValueKey<int>(3), child: Text(t, '
+              'maxLines: 2));\n'),
+          isEmpty);
+      expect(mc06('final p = SizedBox.square(dimension: 24);\n'), isEmpty);
+      expect(mc06('final p = SizedBox.shrink();\n'), isEmpty);
+      final List<RuleHit> nested = mc06('final p = SizedBox(\n'
+          '  width: space.s2,\n'
+          '  child: Padding(padding: EdgeInsets.all(9)),\n'
+          ');\n');
+      expect(nested.single.line, 3);
+    });
+
+    test('no exemption: the generated token file and numeric_cell.dart fail', () {
+      const String src = 'final p = BorderRadius.circular(8);\n';
+      expect(mc06(src, path: 'lib/design/tokens/design_tokens.g.dart'),
+          hasLength(1));
+      expect(mc06(src, path: 'lib/components/numeric_cell.dart'), hasLength(1));
+    });
+
+    test('MC-06 is covered, not listed UNCOVERED', () {
+      expect(coveredRules, contains('MC-06'));
+      expect(uncoveredRows.map((UncoveredRow u) => u.rule), isNot(contains('MC-06')));
+    });
+  });
+
   group('cli', () {
     late Directory tmp;
     setUp(() => tmp = Directory.systemTemp.createTempSync('ui_check_rules'));
