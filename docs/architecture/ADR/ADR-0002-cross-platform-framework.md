@@ -1,5 +1,5 @@
 # ADR-0002: Cross-platform UI framework
-- **Status:** PROPOSED
+- **Status:** ACCEPTED (product owner, 2026-11-16, on `SPIKE_REPORT.md` §4 #1 and #4)
 - **Date:** 2026-10-23
 - **Owner:** Lead architect
 - **Approver:** Product owner
@@ -23,3 +23,6 @@ A small prototype delays feature coding but reduces framework reversal risk.
 - **Platform scope changed by the owner (2026-10-25):** the targets are Windows, macOS, Android and iOS, built in CI from day 1; web is a Style Guide and MotionLab demo only, not a product target (ADR-0009). The "Web/PWA" target and the "web build" test in the context above therefore apply to the demo only.
 - **Working choice:** Flutter, conditional on the spike. Pass criteria and time box: `docs/architecture/SPIKE_PLAN.md` (SP-01…12) and `docs/architecture/PLATFORM_MATRIX.md`. A failed criterion reopens this ADR (R-001).
 - **Constraints the framework must meet** come from the UI constitution: `BigInt` money on every target (DD-05, RKX-01), Persian RTL with Jalali dates (R-006), 18-digit amounts (ADR-UI-007), tokens generated from `design/tokens/design_tokens.json`.
+
+## Update 2026-11-16 (accepted)
+- The product owner accepted Flutter after the M0 spike (`docs/architecture/SPIKE_REPORT.md` §1 has no FAIL; §4 #1). State management and routing: Riverpod + go_router (§4 #4, SP-12), with the test-only packages in the runtime graph (M5) recorded in the audit rows.

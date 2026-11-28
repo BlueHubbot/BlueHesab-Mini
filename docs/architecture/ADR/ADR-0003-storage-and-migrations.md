@@ -1,5 +1,5 @@
 # ADR-0003: Local storage and migrations
-- **Status:** PROPOSED
+- **Status:** ACCEPTED (product owner, 2026-11-16, on `SPIKE_REPORT.md` §4 #2)
 - **Date:** 2026-10-23
 - **Owner:** Data architect
 - **Approver:** Lead architect
@@ -35,3 +35,7 @@ Migration tests, offline CRUD, restart, backup/restore round-trip, corrupt backu
 | Browser quotas and eviction | not applicable: web is a demo with no user data |
 | Export versioning | `format_version` of the backup file and `schema_version` are independent (`docs/RELEASE_AND_VERSIONING.md` §1) |
 | Future sync metadata | IDs, `updated_at` and soft-delete `deleted_at` exist; version vectors and tombstone propagation are deferred (ADR-0005/0006) |
+
+## Update 2026-11-16 (accepted)
+- Binding: drift with the `package:sqlite3` build hook (proven in SP-02/SP-05); one writer connection (T-006 finding).
+- Encryption: none in v0.1 (option a of `SPIKE_REPORT.md` §4 #2). SQLite3MultipleCiphers via the same hook is evaluated in a later spike and needs its own licence row before use.
